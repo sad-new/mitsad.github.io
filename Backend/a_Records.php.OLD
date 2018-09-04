@@ -1,0 +1,180 @@
+<?php
+
+	include 'b_ConnectionString.php';
+
+
+		//function selection block	
+		if(isset($_POST['action']) && !empty($_POST['action'])) 
+		{
+	    $action = $_POST['action'];
+		    switch($action) 
+		    {
+		    	case '1' : getGradesTable() ; break ;
+
+		        //default : echo 'NOTHING';break;
+		    }
+		}
+
+
+	function loadAccountType($accountNumber)
+	{
+		$query = '';
+	}
+
+
+	function loadDropDownSYTerm($userType, $accountNumber)
+	{
+		$classArray = array();
+
+		$query = 
+			'SELECT * from 
+			(		
+				SELECT DISTINCT 
+					classID, subjectID_Class, 
+					sectionID_Class, syTermID_Class, 
+					adviserID_Class 
+				FROM classes 
+				
+				INNER JOIN
+				( SELECT classID_Grades, accountID_Grades from grades ) AS C1
+				ON classes.classID = C1.classID_Grades 
+			) as J0
+
+			INNER JOIN
+			( SELECT sectionID, sectionName, sectionYearLevel FROM sections ) AS J1 
+			ON J0.sectionID_Class = J1.sectionID 			
+			INNER JOIN
+			( SELECT  subjectID, subjectName FROM subjects ) AS J2 
+			ON J0.subjectID_Class = J2.subjectID			
+			INNER JOIN
+			( SELECT employeeID, employeeName FROM employees ) AS J3
+			ON J0.adviserID_Class = J3.employeeID			
+			INNER JOIN
+			( SELECT syTermID, schoolYear, termNumber FROM syTerms ) AS J4
+			ON J0.syTermID_Class = J4.syTermID
+			INNER JOIN
+			( SELECT employeeID, accountID_Employees from employees ) as J5
+			ON J0.adviserID_Class = J5.employeeID ';
+
+			if ($userType != 'schoolAdministrator')
+			{
+				$query .= 'AND J5.accountID_Employees = '.$accountNumber.' ';
+			}
+
+
+		$tableQuery = mysql_query($query) 
+			or die ("cannot load tables");  
+
+		while($getRow = mysql_fetch_array($tableQuery))
+		{
+			//fill one row of the array
+			$classEntry = array();
+
+			$classEntry['classID']     = $getRow['classID'];
+
+			$classEntry['syTermID']     = $getRow['syTermID'];
+			$classEntry['schoolYear']     = $getRow['schoolYear'];
+			$classEntry['termNumber']     = $getRow['termNumber'];
+
+			$classEntry['sectionID']     = $getRow['sectionID'];
+			$classEntry['sectionName']   = $getRow['sectionName'];
+			$classEntry['sectionYearLevel']   = $getRow['sectionYearLevel'];
+
+			$classEntry['subjectID']   = $getRow['subjectID'];
+			$classEntry['subjectName']   = $getRow['subjectName'];
+
+			$classEntry['employeeID']  = $getRow['employeeID'];
+			$classEntry['employeeName']  = $getRow['employeeName'];
+
+			$classArray[] = $classEntry;
+		}
+
+		return $classArray;
+	}
+
+
+
+
+
+
+	//1
+	function getGradesTable()
+	{
+
+		$capturedSelectedClass  = $_POST['selectedClass'];
+
+		$gradeArray = [];
+
+		$colNames = getColumnNames();
+		$gradeArray[] = $colNames;
+
+	 	//ENTRIES
+		$capturedGradeArray = getGradeEntries($colNames, $capturedSelectedClass);
+		foreach($capturedGradeArray as $gradeArrayEntry)
+	 	{
+		 	//$string1=implode(",",$string);
+
+	 		$arrayEntry = [];
+
+	 		foreach($gradeArrayEntry as $GradeArrayEntryElement)
+	 		{
+	 			$arrayEntry[] =  $GradeArrayEntryElement;
+	 		}
+	 		$gradeArray[] = $arrayEntry;
+		}
+
+
+		echo json_encode($gradeArray);
+	}
+
+
+
+			// echo 'script language="javascript">';
+			// echo('alert("THIS TOOL IS INVALUABLE. USE THIS TO MAKE ALERTS!");');
+			// echo '</script>';
+
+
+
+	//TABLE: COLUMN NAMES
+	function getColumnNames()
+	{
+		$query = 'show columns from grades;';
+		$tableQuery = mysql_query($query); 
+
+		//array of column Names
+		$colNames = [];
+
+		//place extracted field to the array
+		while ($getRow = mysql_fetch_array($tableQuery))
+		{
+			$colNames[] = $getRow['Field'];
+		}
+
+		return $colNames;
+	}
+
+
+	//TABLE: TABLE ENTRIES
+	function getGradeEntries($colNames, $capturedSelectedClass)
+	{
+		$gradeArray = array();
+
+		$query = 'select * from grades where classID_Grades = ' .$capturedSelectedClass;
+		$tableQuery = mysql_query($query); 
+
+		while ($row = mysql_fetch_array($tableQuery))
+		{
+			$rowEntry = array();
+			for ($i = 0; $i < count($colNames) ; $i++)
+			{
+				$rowEntry[strval($colNames[$i])] = $row[strval($colNames[$i])];
+
+			}
+			$gradeArray[] = $rowEntry;
+		}		
+
+		return $gradeArray;
+	}
+
+
+?>
