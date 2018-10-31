@@ -411,8 +411,8 @@ function ajax_GetSubjectTableEntries(gradeLevel)
 
 	    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
 	    {
-	       alert('Error in School Year retrieval!');
-	       reject('Error in School Year retrieval!');        
+	       alert('Error in Subject List retrieval!');
+	       reject('Error in Subject List retrieval!');        
 		});
 	});
 

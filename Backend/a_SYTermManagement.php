@@ -19,11 +19,11 @@ include 'b_ConnectionString.php';
 	        case '4' : updateSYTerm();break;
 	        case '5' : removeSYTerm();break;
 
-            case '7' : checkSYTermForExistence();break;
+          case '7' : checkSYTermForExistence();break;
 
-            case '11' : loadSYTermList();break;
-            case '12' : setActiveTerm();break;
-			   case '13' : loadYears();break;
+          case '11' : loadSYTermList();break;
+          case '12' : setActiveTerm();break;
+			    case '13' : loadYears();break;
 	      	case '14' : loadTables();break;
 	        //default : echo 'NOTHING';break;
 	    }
@@ -33,22 +33,27 @@ include 'b_ConnectionString.php';
 
     function checkTableSize()
     {
-        $query = 'SELECT COUNT(*) FROM syTerms';
-        $result = mysql_query($query); 
-        $tableCount = mysql_fetch_row($result);
-        return $tableCount[0];
+
+      include 'b_ConnectionString.php';
+
+      $query = 'SELECT COUNT(*) FROM syTerms';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
+      return $tableCount[0];
     }
 
 
 
     function getActiveTerm()
     {
-        $activeTermArray = array();
-        $query = "SELECT * from syterms WHERE isActive = 1;";
-        $tableQuery = mysql_query($query); 
+      include 'b_ConnectionString.php';
 
-        $activeTermArray = mysql_fetch_assoc($tableQuery);
-        return $activeTermArray;
+      $activeTermArray = array();
+      $query = "SELECT * from syterms WHERE isActive = 1;";
+      $tableQuery = mysqli_query($mySQL_ConStr, $query); 
+
+      $activeTermArray = mysqli_fetch_assoc($tableQuery);
+      return $activeTermArray;
     }
 
 
@@ -57,50 +62,57 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function addNewSYTerm()
 	{
+    require 'b_ConnectionString.php';
 
 		$capturedSchoolYearData = $_POST['sendSchoolYearData'];
-
 		for ($counter = 1 ; $counter <= 4 ; $counter++)
 		{
-			$query = "INSERT INTO syTerms (schoolYear, termNumber, isActive) 
-			VALUES ('$capturedSchoolYearData', '" . $counter . "', '0');";
+			$query = "
+        INSERT INTO syTerms (schoolYear, termNumber, isActive) 
+			 VALUES ('$capturedSchoolYearData', '" . $counter . "', '0');";
 
-			mysql_query($query);
+			mysqli_query($mySQL_ConStr, $query);
 		}
 
 		autoSetActiveSYTerm();
 	}
 
 
-
+  //SET THE FIRST TERM'S 'ACTIVE TERM' COL TO 1
+  //SET EVERY OTHER TERM TO 0
 	function autoSetActiveSYTerm()
 	{
+    require 'b_ConnectionString.php';
 
 		$activeTermArray = array();
-        $query = "SELECT * from syterms WHERE isActive = 1;";
-        $tableQuery = mysql_query($query); 
+    $query = "SELECT * from syterms WHERE isActive = 1;";
+    $tableQuery = mysqli_query($mySQL_ConStr, $query); 
 
-        $activeTermArray = mysql_fetch_assoc($tableQuery);
+    $activeTermArray = mysqli_fetch_assoc($tableQuery);
 
 
-
-		if (sizeof($activeTermArray) == 1)
+		if (sizeof($activeTermArray) != 1)
 		{
-			$query = "SELECT * FROM syterms ORDER BY syTermID ASC LIMIT 0, 1;";
-			$tableQuery = mysql_query($query);   
+			$query = "
+        SELECT * FROM syterms 
+        ORDER BY syTermID ASC LIMIT 0, 1;";
+			$tableQuery = mysqli_query($mySQL_ConStr, $query);   
 
-			while($getRow = mysql_fetch_assoc($tableQuery))
+			while($getRow = mysqli_fetch_assoc($tableQuery))
 			{
 				$selectedSYTerm = $getRow['syTermID'];
 			}
 
-	        $query = 
-	        "UPDATE syterms SET isActive = '1' WHERE syTermID = $selectedSYTerm;";
-			mysql_query($query);
-	        $query = 
-	        "UPDATE syterms SET isActive = '0' WHERE syTermID != $selectedSYTerm;";
-	        mysql_query($query);
-    	}
+	    $query = "
+        UPDATE syterms SET isActive = '1' 
+        WHERE syTermID = $selectedSYTerm;";
+      mysqli_query($mySQL_ConStr, $query);
+	        
+      $query = "
+        UPDATE syterms SET isActive = '0' 
+        WHERE syTermID != $selectedSYTerm;";
+	    mysqli_query($mySQL_ConStr, $query);
+    }
     	
 	}
 
@@ -110,12 +122,16 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function retrieveSYTerm()
 	{
+    require 'b_ConnectionString.php';
+
 		$capturedSYTermID = $_POST['sendSYTermID'];
 
-		$query = "SELECT * FROM syTerms WHERE syTermID = '$capturedSYTermID'";
+		$query = "
+      SELECT * FROM syTerms 
+      WHERE syTermID = '$capturedSYTermID'";
 
-		$result = mysql_query($query);
-		$returnValue = mysql_fetch_array($result);
+		$result = mysqli_query($mySQL_ConStr, $query);
+		$returnValue = mysqli_fetch_array($result);
 
 		echo json_encode($returnValue);
 	}
@@ -129,17 +145,16 @@ include 'b_ConnectionString.php';
 	function updateSYTerm()
 	{
 
+    require 'b_ConnectionString.php';
+
 		$capturedIsActiveData   = $_POST['sendIsActiveData'];
 		$capturedSYTermIDData   = $_POST['sendSYTermIDData'];
 
 		$query = "UPDATE syTerms 
-			SET 
-			isActive = '$capturedIsActiveData'
-			WHERE
-			syTermID = '$capturedSYTermIDData'";
+			SET isActive = '$capturedIsActiveData'
+			WHERE syTermID = '$capturedSYTermIDData'";
 
-
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		
 		if ($capturedIsActiveData == '1')
 		{
@@ -149,10 +164,10 @@ include 'b_ConnectionString.php';
 				syTermID != '$capturedSYTermIDData'";
 
 
-			mysql_query($query);
+			mysqli_query($mySQL_ConStr, $query);
 		}
 
-      autoSetActiveSYTerm();
+      //autoSetActiveSYTerm();
 	}
 
 	//---------------------------------------------------------------------------
@@ -160,28 +175,46 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function removeSYTerm()
 	{
+    require 'b_ConnectionString.php';
+
 		$captured_SchoolYear = $_POST['sendSchoolYear'];
 
-		//remove user from employees and accounts table
-		$query = "delete from syTerms where schoolYear = $captured_SchoolYear";
-		mysql_query($query);
-		//return 1;
+		$query = "
+      DELETE from syTerms 
+      WHERE schoolYear = $captured_SchoolYear";
+		mysqli_query($mySQL_ConStr, $query);
 
-		autoSetActiveSYTerm();
+
+    $query = "
+      SELECT 1 AS 'exists' FROM syterms 
+      WHERE isActive = 1 LIMIT 1";
+    $result = mysqli_query($mySQL_ConStr, $query);
+    $returnValue = mysqli_fetch_array($result);
+
+    autoSetActiveSYTerm();
+
+    echo json_encode($returnValue);
 	}
 
 
-    function checkSYTermForExistence()
-    {
-        $capturedSchoolYear = $_POST['sendSchoolYear'];
 
-        $query = "SELECT 1 FROM syTerms WHERE schoolYear = '$capturedSchoolYear'";
+  function checkSYTermForExistence()
+  {
+    require 'b_ConnectionString.php';
 
-        $result = mysql_query($query);
-        $returnValue = mysql_fetch_array($result);
+    $capturedSchoolYear = $_POST['sendSchoolYear'];
 
-        echo json_encode($returnValue);       
-    }
+    $query = "
+      SELECT 1 as 'exists' FROM syTerms 
+      WHERE schoolYear = '$capturedSchoolYear'
+      LIMIT 1";
+
+    $result = mysqli_query($mySQL_ConStr, $query);
+    $returnValue = mysqli_fetch_array($result);
+
+    echo json_encode($returnValue['exists']);       
+  }
+
 
 
     //---------------------------------------------------------------------------
@@ -191,19 +224,39 @@ include 'b_ConnectionString.php';
 
     function loadSYTermList()
     {
-        $syTermArray = array();
+      require 'b_ConnectionString.php';
 
-        $query = "SELECT * FROM syTerms 
+      $activeTermData = array();
+
+      $query = "
+        SELECT * FROM syTerms 
         ORDER by schoolYear ASC, termNumber ASC";
-        $tableQuery = mysql_query($query) 
-            or die ("cannot load tables"); 
+      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
+          or die ("cannot load tables"); 
 
-        while($getRow = mysql_fetch_assoc($tableQuery))
-        {
-            $syTermArray[] = $getRow; 
-        }
+      $syTermArray = array();
+      while($getRow = mysqli_fetch_assoc($tableQuery))
+      {
+        $syTermArray[] = $getRow; 
+      }
+      $activeTermData[] = $syTermArray;
 
-        echo json_encode($syTermArray);
+
+
+
+      $query = "
+        SELECT syTermID from syterms 
+        WHERE isActive = 1";
+      $tableQuery = mysqli_query($mySQL_ConStr, $query);
+      $activeTerm = mysqli_fetch_assoc($tableQuery);
+      $activeTermData[] = $activeTerm;
+
+
+
+
+
+
+      echo json_encode($activeTermData);
     }
 
 
@@ -213,19 +266,21 @@ include 'b_ConnectionString.php';
 
     function setActiveTerm()
     {
-        $captured_SYTermID = $_POST['sendSYTermID'];
+      require 'b_ConnectionString.php';
+
+      $captured_SYTermID = $_POST['sendSYTermID'];
 
 
-        $query = "UPDATE syterms SET isActive = '1' 
-        WHERE syTermID = $captured_SYTermID;";
-        mysql_query($query);
+      $query = "UPDATE syterms SET isActive = '1' 
+      WHERE syTermID = $captured_SYTermID;";
+      mysqli_query($mySQL_ConStr, $query);
 
-        $query = "UPDATE syterms SET isActive = '0' 
-        WHERE syTermID != $captured_SYTermID;";
-        mysql_query($query);
+      $query = "UPDATE syterms SET isActive = '0' 
+      WHERE syTermID != $captured_SYTermID;";
+      mysqli_query($mySQL_ConStr, $query);
 
 
-        echo json_encode(1);
+      echo json_encode(true);
     }
 
 	//---------------------------------------------------------------------------
@@ -233,13 +288,18 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function loadYears()
 	{
+    include 'b_ConnectionString.php';
+
 		$schoolYearArray = array();
 
-		$query = "select distinct schoolYear from syterms order by schoolYear ASC";
-		$tableQuery = mysql_query($query) 
+		$query = "
+      select distinct schoolYear from syterms 
+      order by schoolYear ASC";
+		
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$schoolYearArray[] = $getRow; 
 		}
@@ -252,16 +312,19 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function loadTerms($captured_SchoolYear)
 	{
+    include 'b_ConnectionString.php';
+
 		$syTermArray = array();
 
-		$query = "select * from syTerms 
-				where schoolYear = $captured_SchoolYear
-				ORDER BY termNumber ASC";
+		$query = "
+      select * from syTerms 
+			where schoolYear = $captured_SchoolYear
+			ORDER BY termNumber ASC";
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{  
 			$syTermArray[] = $getRow; 
 		}
@@ -270,33 +333,5 @@ include 'b_ConnectionString.php';
 	}
 
 
-
-
-
-
-
-
-	//---------------------------------------------------------------------------
-	// ****uNIMPLEMENTED YET (CHECK FOR USER EXISTENCE)
-	//---------------------------------------------------------------------------
-	function checkForUser($capturedUserNameData, $capturedPassData)
-	{
-	 		$query = "SELECT EXISTS (SELECT * from accounts where username = '$capturedUserNameData' and password = '$capturedPassData')";
-	 		$result = mysql_query($query);
-
-	 		//account exists.
-	 		if ($result)
-	 		{
-	 			$returnValue = "ISFOUND"; //FOUND
-	 		}
-  
-	 		//account is missing.
-	 		else
-	 		{
-	 			$returnValue = "ISNOTFOUND"; //NOT FOUND
-	 		}
-
-	 		return $returnValue;
-	}
 
 ?>

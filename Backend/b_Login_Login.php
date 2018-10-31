@@ -1,7 +1,9 @@
 <?php
 
   if(!isset($_SESSION)) 
-  {session_start();}
+  {
+		session_start();
+	}
 
 include 'b_ConnectionString.php';
 
@@ -12,8 +14,8 @@ $POSTed_Password = $_POST['f_Password'];
 
 
 //Check DB for matching username+Password
-$query = mysqli_query($con, "select * from ".$mysql_Database.".accounts where username='$POSTed_UserName' and password ='$POSTed_Password'");
-$checkRows = mysqli_num_rows($query);  
+$query = mysqli_query($mySQL_ConStr, "select * from ".$mySQL_Database.".accounts where username='$POSTed_UserName' and password ='$POSTed_Password'");
+$checkRows = $query->num_rows;  
 
 if ($checkRows!=0)
 {
@@ -26,7 +28,8 @@ if ($checkRows!=0)
 	}
 
 
- 	if($POSTed_UserName==$fetched_UserName&&$POSTed_Password==$fetched_Password)
+ 	if($POSTed_UserName==$fetched_UserName&&
+    $POSTed_Password==$fetched_Password)
 	{
 
 		$_SESSION['userName'] = $fetched_UserName;
@@ -35,11 +38,11 @@ if ($checkRows!=0)
 
 
 		session_write_close();
-		header("location:./Dashboard.php");
+		echo "<script>window.location.href='./Dashboard.php';</script>";
 		exit();
 	}
 
-		// NEITHER
+	// NEITHER
 	else 
 	{
 		//echo "3";

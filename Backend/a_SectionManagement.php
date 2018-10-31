@@ -30,10 +30,12 @@ include 'b_ConnectionString.php';
 
     function checkTableSize()
     {
-        $query = 'SELECT COUNT(*) FROM sections';
-        $result = mysql_query($query); 
-        $tableCount = mysql_fetch_row($result);
-        return $tableCount[0];
+      require 'b_ConnectionString.php';
+
+      $query = 'SELECT COUNT(*) FROM sections';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
+      return $tableCount[0];
     }
 
 
@@ -42,6 +44,8 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function addNewSection()
 	{
+    require 'b_ConnectionString.php';
+
 		$capturedSectionNameData = $_POST['sendSectionNameData'];
 		$capturedSectionGradeLevelData = $_POST['sendSectionGradeLevelData'];
 
@@ -49,7 +53,7 @@ include 'b_ConnectionString.php';
 		VALUES (
 		'$capturedSectionNameData', 
 		'$capturedSectionGradeLevelData')";
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 
 	}
 
@@ -58,10 +62,12 @@ include 'b_ConnectionString.php';
 	//RETRIEVE ACCOUNTID OF THE LATEST CREATED ACCOUNT
 	function getSectionID()
 	{
-			$query = 'select sectionID from sections order by sectionID DESC';
-			$result = mysql_query($query); 
-			$accountID = mysql_fetch_row($result);
-			return $sectionID[0];
+    require 'b_ConnectionString.php';
+
+		$query = 'select sectionID from sections order by sectionID DESC';
+		$result = mysqli_query($mySQL_ConStr, $query); 
+		$accountID = mysqli_fetch_row($result);
+		return $sectionID[0];
 	}
 
 
@@ -71,12 +77,13 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function retrieveSection()
 	{
-		$capturedSectionID = $_POST['sendSectionID'];
+    require 'b_ConnectionString.php';
 
+		$capturedSectionID = $_POST['sendSectionID'];
 		$query = "SELECT * FROM sections WHERE sectionID = '$capturedSectionID'";
 
-		$result = mysql_query($query);
-		$returnValue = mysql_fetch_array($result);
+		$result = mysqli_query($mySQL_ConStr, $query);
+		$returnValue = mysqli_fetch_array($result);
 
 		echo json_encode($returnValue);
 	}
@@ -89,6 +96,7 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function updateSection()
 	{
+    require 'b_ConnectionString.php';
 
 		$capturedSectionID = $_POST['sendSectionID'];
 		$capturedSectionNameData = $_POST['sendSectionNameData'];
@@ -103,7 +111,7 @@ include 'b_ConnectionString.php';
 		sectionID = '$capturedSectionID';";
 
 
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		
 	}
 
@@ -114,11 +122,12 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function removeSection()
 	{
+    require 'b_ConnectionString.php';
+
 		$capturedSectionID = $_POST['sendSectionID'];
 
-		//remove user from employees and accounts table
 		$query = "delete from sections where sectionID = $capturedSectionID";
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		//return 1;
 
 	}
@@ -131,31 +140,33 @@ include 'b_ConnectionString.php';
     function loadGradeLevelsAndSectionCount()
     {
 
-		$syTermCountArray = array();
+      require 'b_ConnectionString.php';
 
-		$query = 
-				"SELECT 
-					gl.gradeLevelID,
-		        	gl.gradeLevelName,
-		        	IFNULL(COUNT(s.sectionName), 0) AS 'children'
-	    		FROM 
-	    			gradeLevels as gl  
-    
-			    LEFT JOIN 
-			    	sections as s  
-			    ON s.gradeLevelID_Sections = gl.gradeLevelID
-			    GROUP by gl.gradeLevelID";
+  		$syTermCountArray = array();
 
-		$tableQuery = mysql_query($query) 
-			or die ("cannot load tables");  
+  		$query = 
+  				"SELECT 
+  					gl.gradeLevelID,
+  		        	gl.gradeLevelName,
+  		        	IFNULL(COUNT(s.sectionName), 0) AS 'children'
+  	    		FROM 
+  	    			gradeLevels as gl  
+      
+  			    LEFT JOIN 
+  			    	sections as s  
+  			    ON s.gradeLevelID_Sections = gl.gradeLevelID
+  			    GROUP by gl.gradeLevelID";
+
+  		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
+  			or die ("cannot load tables");  
 
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
-		{
-			$syTermCountArray[] = $getRow;
-		}
+  		while($getRow = mysqli_fetch_assoc($tableQuery))
+  		{
+  			$syTermCountArray[] = $getRow;
+  		}
 
-		echo json_encode($syTermCountArray);
+  		echo json_encode($syTermCountArray);
     }
 
 
@@ -164,6 +175,7 @@ include 'b_ConnectionString.php';
     //---------------------------------------------------------------------------
     function loadSections()
     {
+      require 'b_ConnectionString.php';
 
     	$captured_SectionYearLevel = $_POST['sendGradeLevel'];
 
@@ -172,10 +184,10 @@ include 'b_ConnectionString.php';
         where gradeLevelID_Sections = $captured_SectionYearLevel 
         ORDER BY sectionID ASC";
 
-        $tableQuery = mysql_query($query) 
+        $tableQuery = mysqli_query($mySQL_ConStr, $query) 
             or die ("cannot load tables");  
 
-        while($getRow = mysql_fetch_array($tableQuery))
+        while($getRow = mysqli_fetch_array($tableQuery))
         {  
             $sectionArray[] = $getRow;
         }

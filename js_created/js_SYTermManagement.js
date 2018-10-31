@@ -8,7 +8,9 @@ function object_SYTerm()
 	var isActive = "";  
 
 
-    this.setVariables = function(var_SYTermID, var_SchoolYear, var_termNumber, var_IsActive)
+    this.setVariables = function(
+      var_SYTermID, var_SchoolYear, 
+      var_termNumber, var_IsActive)
     {
 		syTermID = var_SYTermID;  
 		schoolYear = var_SchoolYear; 
@@ -56,95 +58,31 @@ $(document).ready(function()
 
     $('#button_ChangeActiveSYTermEntry').click(function(e) 
     {
-        $('#response').empty(); 
-
-        var promise = ajax_RetrieveSYTermList(); 
-        promise.success(function(data)
-        {
-            var dropDown = document.getElementById('dropdown_ChangeActiveSYTerm');
-            dropDown.innerHTML = ""; 
-
-            for (var i = 0; i < data.length; i++)
-            {
-                var option = document.createElement('option');
-                option.innerHTML = "SY " + data[i]['schoolYear'] + " Term " + data[i]['termNumber']; 
-                option.value = data[i]['syTermID'];
-                dropDown.appendChild(option);
-            } 
-        });
+      clicksetActiveSYTermEntryButton();
     });
 
 
     $('#button_SetActiveSYTermEntry').click(function(e) 
     {   
-        var dropDown = document.getElementById('dropdown_ChangeActiveSYTerm');
-        var promise = ajax_SetActiveSYTerm(dropDown.value);
-        promise.success(function(data)
-        {
-        });
+
+      setActiveTerm();
     });
+
 
 //---------------------------------------------------------------------------
 // A D D   M O D A L
 //---------------------------------------------------------------------------
 
-
-
 	$('#addSYTermEntry').click(function(e) 
 	{	
 		obj_SYTermObject.purgeVariables();
-		$('#response').empty(); 
-
-        var min = new Date().getFullYear(),
-        max = new Date().getFullYear() + 9,
-        select = document.getElementById('addSchoolYear');
-        select.innerHTML = "";
-
-
-        for (var i = min; i<=max; i++)
-        {
-            var opt = document.createElement('option');
-            opt.value = i;
-            opt.innerHTML = i;
-            select.appendChild(opt);
-        }
+    clickAddButton();
 	});
 
 
 	$('#submitNewSYTermEntry').click(function(e) 
 	{
-		e.preventDefault();
-
-		 var valid = '';
-		 var required = ' is required.';
-		 var schoolYear = $('#addSchoolYear').val();
-
-		if (schoolYear == '' || schoolYear <= 1) 
-		{
-			valid += '</br>The School Year' + required;				
-		}
-
-		if (valid != '') 
-		{
-		 	$('form #response').removeClass().addClass('error')
-		 		.html('<strong>Please correct the errors below.</strong>' +valid).fadeIn('fast');	
-		}
-
-		else
-	 	{
-            var promise = ajax_CheckSYTermEntryForExistence(schoolYear);
-            promise.success(function(data)
-            {
-                if (data==false)
-                {
-                    ajax_AddNewSYTerm(schoolYear);   
-                }
-                else
-                {
-                    alert('Duplicate school year!');
-                }
-            });		
-	 	}
+    addNewEntry();
 	});
 
 
@@ -156,45 +94,14 @@ $(document).ready(function()
 
 	$('.editSYTermEntry').click(function(e) 
 	{	
-		//get TABLE COORDINATES!
-		var row_num = parseInt( $(this).parent().parent().parent().index() )+1;  
-		var col_num = parseInt( $(this).parent().parent().index() )+1;  
-
-		//GET SECTION ID OF SELECTED ENTRY
-	 	var syTermID = this.value; 
-	 	obj_SYTermObject.setVariables(syTermID, "","","");
- 
-
-	 	var promise = ajax_RetrieveSYTermEntry(syTermID);
-        promise.success(function(data)
-        {
-            obj_SYTermObject.setVariables
-            (
-                data['syTermID'], data['schoolYear'], 
-                data['termNumber'], data['isActive']
-            );
-
-            //set DropDown2 to correct Value
-            var dropDown2 = document.getElementById("dropDown_editIsActive");
-
-            for (var i = 0; i < dropDown2.length; i++)
-            {
-                if (dropDown2.options[i].value==data['isActive']) 
-                {
-                    dropDown2.options[i].selected = "Selected";
-                }
-            }
-
-        });
+    obj_SYTermObject.setVariables(this.value, "","","");
+    clickEditButton(obj_SYTermObject, this.value);
 	});
 
 
 	$('#button_UpdateEditedSYTermEntry').click(function(e) 
 	{
-		var isActiveData   = 1;
-		var syTermIDData     = obj_SYTermObject.getVariables()["syTermID"];
-
-		ajax_UpdateSYTermEntry(isActiveData, syTermIDData);
+    updateNewEntry(obj_SYTermObject);
 	});
 
 
@@ -207,19 +114,166 @@ $(document).ready(function()
 	{
 	 	var schoolYear = this.value; 
 	 	obj_SYTermObject.setVariables("",schoolYear,"","");
-
-
 	});
+
 
 	$('#removeSelectedSYTermEntry').click(function(e) 
 	{
-		var schoolYear = obj_SYTermObject.getVariables()["schoolYear"];
-		ajax_RemoveSYTermEntry(schoolYear);
+    var schoolYear = obj_SYTermObject.getVariables()["schoolYear"];
+    removeEntry(schoolYear);
 	});
 
 });
 
 
+//---------------------------------------------------------------------------
+// N O N    A J A X   C A L L S
+//---------------------------------------------------------------------------
+
+
+async function clicksetActiveSYTermEntryButton()
+{
+  $('#response').empty(); 
+
+  await ajax_RetrieveSYTermList() 
+  .then(function(data)
+  {
+
+    //empty dropdown
+    var dropDown = document.getElementById
+      ('dropdown_ChangeActiveSYTerm');
+    dropDown.innerHTML = ""; 
+
+
+    //fill dropdown
+    var syTermArray = data[0];
+    for (var i = 0; i < syTermArray.length; i++)
+    {
+        var option = document.createElement('option');
+        option.innerHTML = "SY " 
+          + syTermArray[i]['schoolYear'] 
+          + " Term " + syTermArray[i]['termNumber']; 
+        option.value = syTermArray[i]['syTermID'];
+        dropDown.appendChild(option);
+    } 
+
+
+    //set dropdown index to active term
+    var activeSYTermID = data[1]['syTermID'];
+    dropDown.value = activeSYTermID;
+
+  });
+}
+
+
+async function setActiveTerm()
+{
+  var dropDown = document.getElementById
+  ('dropdown_ChangeActiveSYTerm');
+  await ajax_SetActiveSYTerm(dropDown.value)
+  .then(function(result)
+  {location.reload()});
+}
+
+
+
+function clickAddButton()
+{
+  $('#response').empty(); 
+
+    var min = new Date().getFullYear(),
+    max = new Date().getFullYear() + 9,
+    select = document.getElementById('addSchoolYear');
+    select.innerHTML = "";
+
+
+    for (var i = min; i<=max; i++)
+    {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.innerHTML = i;
+      select.appendChild(opt);
+    }
+}
+
+async function addNewEntry()
+{
+  var invalidCounter = 0;
+  var errorMessage = '';
+
+  var required = ' is required.';
+  var schoolYear = $('#addSchoolYear').val();
+
+  if (schoolYear == '' || schoolYear <= 1) 
+  {
+    invalidCounter++;
+    errorMessage += '</br>The School Year' + required;       
+  }
+
+  await ajax_CheckSYTermEntryForExistence(schoolYear)
+  .then(function(result)
+  {
+    if (result == 1)
+    {
+      invalidCounter++;
+      errorMessage += '</br>Duplicate School Year.';
+    }
+  });
+
+  if (invalidCounter != 0) 
+  {
+    $('form #response').removeClass().addClass('error')
+      .html('<strong>Please correct the errors below.</strong>' 
+        + errorMessage).fadeIn('fast');  
+  }
+  else
+  { 
+    await ajax_AddNewSYTerm(schoolYear)
+    .then(function(result)
+    {location.reload()});
+  }
+}
+
+
+
+async function clickEditButton(obj_SYTermObject, syTermID)
+{
+  //get TABLE COORDINATES!
+  var row_num = parseInt( $(this).parent().parent().parent().index() )+1;  
+  var col_num = parseInt( $(this).parent().parent().index() )+1;  
+
+ 
+  alert('this is syterm ID => ' + syTermID);
+
+  await ajax_RetrieveSYTermEntry(syTermID)
+  .then(function(data)
+  {
+    obj_SYTermObject.setVariables
+    (
+        data['syTermID'], data['schoolYear'], 
+        data['termNumber'], data['isActive']
+    );
+  });
+}
+
+async function updateNewEntry(obj_SYTermObject)
+{
+  var isActiveData = 1;
+  var syTermIDData = obj_SYTermObject.getVariables()["syTermID"];
+
+  await ajax_UpdateSYTermEntry(isActiveData, syTermIDData)
+  .then(function(result)
+  {location.reload()});
+}
+
+
+
+async function removeEntry(schoolYear)
+{
+  await ajax_RemoveSYTermEntry(schoolYear)
+  .then(function(result)
+  {location.reload()});
+}
 
 
 
@@ -231,42 +285,45 @@ $(document).ready(function()
 // A D D   N E W  E N T R Y
 function ajax_AddNewSYTerm(schoolYearData, numberOfTermsData) 
 { 
-	$.ajax({	
-		type: 'POST',
-		url: 'Backend/a_SYTermManagement.php',	
-		url:$(this).attr("action"),		
-		data: 
-		{
-			action: "2",
-			sendSchoolYearData: schoolYearData,
-			sendNumberOfTermsData: numberOfTermsData
+  return promise = new Promise((resolve, reject) =>
+  {  
 
-		},
-		dataType: 'text',
-		cache: false
-    }) 
-	.done(function(data) 
-	{ 
-		alert('Grading Period Added!'); 
-	})
+  	var request = $.ajax({	
+  		type: 'POST',
+  		url: 'Backend/a_SYTermManagement.php',	
+  		url:$(this).attr("action"),		
+  		data: 
+  		{
+  			action: "2",
+  			sendSchoolYearData: schoolYearData,
+  			sendNumberOfTermsData: numberOfTermsData
+  		},
+  		dataType: 'text',
+  		cache: false
+    });
 
-    .fail(function(XMLHttpRequest, textStatus, errorThrown) 
-	{
-		alert('Error in Grading Period Addition!'); 			
-	})
+  	request.done(function(data) 
+  	{ 
+  		alert('Grading Period Added!'); 
+      resolve();
+  	});
 
-	.always(function(XMLHttpRequest, status) 
-	{ 			
-	 	location.reload();
-	});
+    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+  	{
+  		alert('Error in Grading Period Addition!'); 	
+      reject(errorThrown);
+  	});
+
+  });
 };
 
 // R E T R I E V E   E N T R Y   U S I N G   
 // A C C O U N T   N U M B E R
 function ajax_RetrieveSYTermEntry(syTermID)
 {
-
-	return $.ajax({	
+  return promise = new Promise((resolve, reject) =>
+  {  
+    var request = $.ajax({	
 		type: 'POST',
 		url: 'Backend/a_SYTermManagement.php',
 		data: 
@@ -276,24 +333,30 @@ function ajax_RetrieveSYTermEntry(syTermID)
 		},
 		dataType: 'json',
 		cache: false
-    })
+    });
 
-    .done(function(data) 
-	{ 
-	})
+    request.done(function(data) 
+  	{ 
+      resolve(data);
+  	});
 
-	.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
-	{
-		alert('Error in Retrieving SYTerm Info!'); 		
-	});	
+  	request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+  	{
+  		alert('Error in Retrieving SYTerm Info!'); 	
+      reject(errorThrown);	
+  	});
+
+  });	
 };
 
 
 // U P D A T E   E N T R Y
 function ajax_UpdateSYTermEntry(isActiveData, syTermIDData)
 {
+  return promise = new Promise((resolve, reject) =>
+  {  
 
-	$.ajax({		
+    var request = $.ajax({		
 		type: 'POST',
 		url: 'Backend/a_SYTermManagement.php',
 		data: 
@@ -302,33 +365,36 @@ function ajax_UpdateSYTermEntry(isActiveData, syTermIDData)
 			sendIsActiveData:   isActiveData,
 			sendSYTermIDData:   syTermIDData
 		},
-
 		dataType: 'text',
 		cache: false
-    })
+    });
 
-	.done(function(data) 
-	{ 
-		alert('Updated Grading Period Info!'); 
-	})
+  	request.done(function(data) 
+  	{ 
+  		alert('Updated Grading Period Info!'); 
+      resolve();
+  	});
 
-	.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
-	{
-		alert('Error in Updating Grading Period Info!'); 		
-	})
-	
-	.always(function(XMLHttpRequest, status) 
-	{ 	
-	 	location.reload();
-	});
+  	request.fail(function(data, XMLHttpRequest, 
+      textStatus, errorThrown) 
+  	{
+  		alert('Error in Updating Grading Period Info!'); 		
+      reject(errorThrown);
+  	});
 
+  });
 };
 
 
 // R E M O V E   E N T R Y
 function ajax_RemoveSYTermEntry(schoolYear)
 {
-	$.ajax({		
+
+  alert(schoolYear);
+	return promise = new Promise((resolve, reject) =>
+  {  
+
+    var request = $.ajax({		
 		type: 'POST',	
 		url: 'Backend/a_SYTermManagement.php',
 		data: 
@@ -339,29 +405,30 @@ function ajax_RemoveSYTermEntry(schoolYear)
 
 		dataType: 'text',
 		cache: false
-    })
+    });
 
-	.done(function(data) 
-	{ 
-		alert('Successfully deleted the entry!'); 
-	})
+  	request.done(function(data) 
+  	{ 
+  		alert('Successfully deleted the entry!'); 
+      resolve();
+  	});
 
-	.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
-	{
-		alert('Error in Deleting account Entry!'); 		
-    })
+  	request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+  	{
+  		alert('Error in Deleting account Entry!'); 		
+      reject(errorThrown);
+    });
 
-	.always(function(XMLHttpRequest, status) 
-	{ 	
-	 	location.reload();
-	});
-			
-};
+  });
+}
+
+
 
 function ajax_CheckSYTermEntryForExistence(schoolYear)
 {
-
-    return $.ajax({ 
+  return promise = new Promise((resolve, reject) =>
+  {   
+    var request = $.ajax({ 
         type: 'POST',
         url: 'Backend/a_SYTermManagement.php',
         data: 
@@ -371,22 +438,31 @@ function ajax_CheckSYTermEntryForExistence(schoolYear)
         },
         dataType: 'json',
         cache: false
-    })
-
-    .done(function(data) 
-    { 
-    })
-
-    .fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
-    {
-        alert('Error in Checking for Existence!');      
     });
+
+    request.done(function(data) 
+    { 
+      resolve(data);
+    });
+
+    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+    {
+      alert('Error in Checking for Existence!');  
+      reject(errorThrown);    
+    });
+
+  });
 };
+
+
+
 
 
 function ajax_RetrieveSYTermList()
 {
-    return $.ajax({ 
+  return promise = new Promise((resolve, reject) =>
+  {   
+    var request = $.ajax({ 
     type: 'POST',
     url: 'Backend/a_SYTermManagement.php',
     data: 
@@ -395,41 +471,53 @@ function ajax_RetrieveSYTermList()
     },
     dataType: 'json',
     cache: false
-    })
-
-    .done(function(data) 
-    { 
-    })
-
-    .fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
-    {
-        alert('Error in Checking for the SY Term List!');      
     });
+
+    request.done(function(data) 
+    { 
+      resolve(data);
+    })
+
+    request.fail(function(data, XMLHttpRequest, 
+      textStatus, errorThrown) 
+    {
+        alert('Error in Checking for the SY Term List!');  
+        reject(errorThrown);    
+    });
+  });
 };
+
 
 
 function ajax_SetActiveSYTerm(syTermID)
 {
-    return $.ajax({ 
-        type: 'POST',
-        url: 'Backend/a_SYTermManagement.php',
-        data: 
-        {
-            action: "12",
-            sendSYTermID: syTermID
-        },
-        dataType: 'json',
-        cache: false
-    })
-
-    .done(function(data) 
-    { 
-        alert('Changed Active Term!'); 
-        location.reload();
-    })
-
-    .fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+  return promise = new Promise((resolve, reject) =>
+  {   
+    var request = $.ajax({ 
+    type: 'POST',
+    url: 'Backend/a_SYTermManagement.php',
+    data: 
     {
-        alert('Error in Setting the Active SY Term!');      
-    }); 
+        action: "12",
+        sendSYTermID: syTermID
+
+    },
+    dataType: 'json',
+    cache: false
+    });
+
+    request.done(function(data) 
+    { 
+      alert('Successfully set the Active Term!');  
+      resolve(data);
+    })
+
+    request.fail(function(data, XMLHttpRequest, 
+      textStatus, errorThrown) 
+    {
+        alert('Error in setting the Active Term!');  
+        reject(errorThrown);    
+    });
+  });  
 }
+

@@ -1,7 +1,7 @@
 
 <?php
 
-	include 'Backend/b_ConnectionString.php';
+	include "Backend/b_ConnectionString.php";
 	require_once ('Backend/c_AccountInfo.php');
 
 	$activeHeader = 3;
@@ -17,12 +17,14 @@
 	//$path = $_SERVER['DOCUMENT_ROOT'];
 	include_once("Backend/a_AccountsManagement.php");
 
+
 ?>
 
 
 
 <!DOCTYPE html>
 <html>
+
 
 	<head>
 		<meta charset="utf-8">
@@ -59,8 +61,9 @@
 					<h1 class="page-header">Accounts Management</h1>					
 				</div>
 			</div>
-			<!--/.row-->
-						
+
+
+			<!-- page goes here -->
             <?php
                 $tableCount = checkTableSize();
 
@@ -72,7 +75,8 @@
                 {
                    include_once('mainPages/11_AccountsManagement_Empty.php'); 
                 }
-            ?>       
+            ?>     
+
 				
 		</div>	
 		<!--/.main-->
@@ -141,8 +145,8 @@
     	<!-- EDIT TEACHER FORM -->
     	<form 	action = "sadnew/Backend/a_Accounts.php" 
     	method="post"
-    	id = "formAddTeacher" 
-    	name = "formAddTeacher">
+    	id = "formEditTeacher" 
+    	name = "formEditTeacher">
 
     		<div class="modal fade" id="edit" tabindex="-1" role="dialog" aria-labelledby="edit" aria-hidden="true">
     	    	<div class="modal-dialog">

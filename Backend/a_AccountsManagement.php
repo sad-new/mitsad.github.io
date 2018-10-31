@@ -1,37 +1,37 @@
 <?php
 
-   if(!isset($_SESSION)) 
-   {session_start();}
+  //  if(!isset($_SESSION)) 
+  //  {
+	//    session_start();
+	//  }
 
-
-
-  include_once('b_ConnectionString.php');
-
+  require_once 'b_ConnectionString.php';
 
 
 	$teacherArray = array();
 
-	//function selection block	
-	if(isset($_POST['sent_Action']) && !empty($_POST['sent_Action'])) 
+
+	if(isset($_POST['sent_Action']) && 
+    !empty($_POST['sent_Action'])) 
   {
 
-
     $captured_Action = $_POST['sent_Action'];
-	    switch($captured_Action) 
-	    {
-	    	case '1' : loadTables();break;
-
-	      case '2' : ajax_AddNewTeacher();break;
-	      case '3' : ajax_RetrieveTeacher();break;
-	      case '4' : ajax_UpdateTeacher();break;
-	      case '5' : ajax_RemoveTeacher();break;
-
-        case '11' : ajax_CheckForAccountName_Add();break;
-        case '12' : ajax_CheckForAccountName_Edit();break;
+    require_once 'b_ConnectionString.php';
+    switch($captured_Action) 
+    {
 
 
-	        //default : echo 'NOTHING';break;
-	    }
+  	  case '1' : loadTables();break;
+      case '2' : ajax_AddNewTeacher();break;
+      case '3' : ajax_RetrieveTeacher();break;
+      case '4' : ajax_UpdateTeacher();break;
+      case '5' : ajax_RemoveTeacher();break;
+
+      case '11' : ajax_CheckForAccountName_Add();break;
+      case '12' : ajax_CheckForAccountName_Edit();break;
+
+      //default : echo 'NOTHING';break;
+    }
 	}
 
     //---------------------------------------------------------------------------
@@ -41,24 +41,22 @@
     //RETRIEVE ACCOUNTID OF THE LATEST CREATED ACCOUNT
     function getAccountID()
     {
-        $query = 'select accountID from accounts order by accountID DESC';
-        $result = mysqli_query($con,$query); 
-        $accountID = mysqli_fetch_row($result);  
-        return $accountID[0];
+      require 'b_ConnectionString.php';
+
+      $query = 'select accountID from accounts order by accountID DESC';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $accountID = mysqli_fetch_row($result);
+      return $accountID[0];
     }
 
     function checkTableSize()
     {
+      require 'b_ConnectionString.php';
 
-
-
-
-
-
-        $query = 'SELECT COUNT(*) FROM accounts';
-        $result = mysqli_query($con, $query); 
-        $tableCount = mysqli_fetch_row($result);
-        return $tableCount[0];
+      $query = 'SELECT COUNT(*) FROM accounts';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
+      return $tableCount[0];
     }
 
 
@@ -67,12 +65,7 @@
 	//---------------------------------------------------------------------------
 	function loadTables()
 	{
-
-  
-
-
-
-
+    require 'b_ConnectionString.php';
 
 		$query = 
 		"select accountID, userName, userType, accountImage, 
@@ -80,10 +73,11 @@
 
 		from accounts LEFT JOIN employees 
 		on accounts.accountID = employees.accountID_Employees 
-		where userType = 'teacher'";
+		where userType = 'teacher'
+    ORDER BY accountID asc";
 		
-		//$teacherArray = mysqli_query($query) 
-		$tableQuery = mysqli_query($con,$query) 
+		//$teacherArray = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 		while($getRow = mysqli_fetch_array($tableQuery))
@@ -113,25 +107,27 @@
 	//---------------------------------------------------------------------------
 	function ajax_AddNewTeacher()
 	{
+    require 'b_ConnectionString.php';
+
 		$captured_EmployeeName = $_POST['sent_EmployeeName'];
 		$captured_UserName = $_POST['sent_UserName'];
 		$captured_Password = $_POST['sent_Password'];
-		//$capturedFormData = $_POST['formData'];
-
 
 
 		//insert teacher info to accounts table
-		$query = "INSERT INTO accounts (userName, password, userType) 
-		VALUES ('$captured_UserName', '$captured_Password', 'teacher')";
-		mysqli_query($con,$query);
+		$query = "
+      INSERT INTO accounts (userName, password, userType) 
+		  VALUES ('$captured_UserName', '$captured_Password', 'teacher')";
+		mysqli_query($mySQL_ConStr, $query);
 
 
 		$accountID = getAccountID();
 
 		//insert teacher to employees table
-		$query = "INSERT INTO employees (accountID_Employees, employeeName) 
-		VALUES ('$accountID', '$captured_EmployeeName');";
-		$result = mysqli_query($con,$query);
+		$query = "
+      INSERT INTO employees (accountID_Employees, employeeName) 
+		  VALUES ('$accountID', '$captured_EmployeeName');";
+		$result = mysqli_query($mySQL_ConStr, $query);
 
 	}
 
@@ -141,8 +137,7 @@
 	//---------------------------------------------------------------------------	
 	function ajax_RetrieveTeacher()
 	{
-
-     include 'b_ConnectionString.php';
+    require 'b_ConnectionString.php';
 
 		$captured_AccountID = $_POST['sent_AccountID'];
 
@@ -153,7 +148,7 @@
 		on accounts.accountID = employees.accountID_Employees 
 		where accountID = $captured_AccountID";
 
-		$result = mysqli_query($con,$query);
+		$result = mysqli_query($mySQL_ConStr, $query);
 		$returnValue = mysqli_fetch_array($result);
 
 		echo json_encode($returnValue);
@@ -169,6 +164,8 @@
 	//---------------------------------------------------------------------------
 	function ajax_UpdateTeacher()
 	{
+    require 'b_ConnectionString.php';
+
 		$captured_AccountID = $_POST['sent_AccountID'];
 		$captured_EmployeeName = $_POST['sent_EmployeeName'];
 		$captured_UserName = $_POST['sent_UserName'];
@@ -179,14 +176,14 @@
 		password = '$captured_Password'
 		WHERE accountID = '$captured_AccountID';";
 		
-		mysqli_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		
 		$query = "UPDATE employees 
 		SET employeeName = '$captured_EmployeeName'
 		where accountID_Employees = '$captured_AccountID';";
 
 
-		mysqli_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 	}
 
 
@@ -196,15 +193,17 @@
 	//---------------------------------------------------------------------------	
 	function ajax_RemoveTeacher()
 	{
+    require 'b_ConnectionString.php';
+
 		$captured_AccountID = $_POST['sent_AccountID'];
 
 		//remove user from employees and accounts table
 		$query = 
                 "delete from employees 
                 where accountID_Employees = $captured_AccountID";
-		mysqli_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		$query = "delete from accounts where accountID = $captured_AccountID";
-		mysqli_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 
 		//return 1;
 
@@ -220,35 +219,40 @@
 	//---------------------------------------------------------------------------
 	function ajax_CheckForAccountName_Add()
 	{
-        $captured_UserName = $_POST['sent_UserName'];
+    require 'b_ConnectionString.php';
+
+    $captured_UserName = $_POST['sent_UserName'];
 
  		$query = "SELECT EXISTS (SELECT * from accounts 
             where username = '$captured_UserName')
             as ifExists";
  		
-        $result = mysqli_query($query);
+        $result = mysqli_query($mySQL_ConStr, $query);
         $returnValue = mysqli_fetch_array($result);
 
  		echo json_encode($returnValue);
 	}
 
-    //---------------------------------------------------------------------------
-    // 1 2 )   E X C L U S I V E   O F   C U U R E N T   U S E R N A M E
-    //---------------------------------------------------------------------------
-    function ajax_CheckForAccountName_Edit()
-    {
-        $captured_AccountID = $_POST['sent_AccountID'];
-        $captured_UserName = $_POST['sent_UserName'];
+  //---------------------------------------------------------------------------
+  // 1 2 )   E X C L U S I V E   O F   C U U R E N T   U S E R N A M E
+  //---------------------------------------------------------------------------
+  function ajax_CheckForAccountName_Edit()
+  {
+    require 'b_ConnectionString.php';
 
-        $query = "SELECT EXISTS (SELECT * from accounts where 
-        username = '$captured_UserName' and 
-        accountID != '$captured_AccountID') 
-        as ifExists";
+    $captured_AccountID = $_POST['sent_AccountID'];
+    $captured_UserName = $_POST['sent_UserName'];
 
-        $result = mysqli_query($query);
-        $returnValue = mysqli_fetch_array($result);
+    $query = "SELECT EXISTS (SELECT * from accounts where 
+    username = '$captured_UserName' and 
+    accountID != '$captured_AccountID') 
+    as ifExists";
 
-        echo json_encode($returnValue);
-    }
+    $result = mysqli_query($mySQL_ConStr, $query);
+    $returnValue = mysqli_fetch_array($result);
+
+    echo json_encode($returnValue);
+  }
+
 
 ?>

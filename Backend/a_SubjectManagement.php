@@ -21,8 +21,8 @@ include 'b_ConnectionString.php';
 	        case '5' : removeSubject();break;
 	        //default : echo 'NOTHING';break;
 
-            case '11' : loadGradeLevelsAndSubjectCount();break;
-            case '12' : loadSubjects();break;
+          case '11' : loadGradeLevelsAndSubjectCount();break;
+          case '12' : loadSubjects();break;
 	    }
 	}
 
@@ -30,10 +30,12 @@ include 'b_ConnectionString.php';
 
     function checkTableSize()
     {
-        $query = 'SELECT COUNT(*) FROM subjects';
-        $result = mysql_query($query); 
-        $tableCount = mysql_fetch_row($result);
-        return $tableCount[0];
+      require 'b_ConnectionString.php';
+
+      $query = 'SELECT COUNT(*) FROM subjects';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
+      return $tableCount[0];
     }
 
 
@@ -42,6 +44,8 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function addNewSubject()
 	{
+    require 'b_ConnectionString.php';
+
 		$capturedSubjectNameData = $_POST['sendSubjectNameData'];
 		$capturedSubjectGradeLevelData = $_POST['sendSubjectGradeLevelData'];
 
@@ -49,7 +53,7 @@ include 'b_ConnectionString.php';
 		VALUES (
 		'$capturedSubjectNameData', 
 		'$capturedSubjectGradeLevelData')";
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 
 	}
 
@@ -58,9 +62,11 @@ include 'b_ConnectionString.php';
 	//RETRIEVE ACCOUNTID OF THE LATEST CREATED ACCOUNT
 	function getSectionID()
 	{
+    require 'b_ConnectionString.php';
+
 			$query = 'select sectionID from sections order by sectionID DESC';
-			$result = mysql_query($query); 
-			$accountID = mysql_fetch_row($result);
+			$result = mysqli_query($mySQL_ConStr, $query); 
+			$accountID = mysqli_fetch_row($result);
 			return $sectionID[0];
 	}
 
@@ -71,12 +77,14 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function retrieveSubject()
 	{
+    require 'b_ConnectionString.php';
+
 		$capturedSubjectID = $_POST['sendSubjectID'];
 
 		$query = "SELECT * FROM subjects WHERE subjectID = '$capturedSubjectID'";
 
-		$result = mysql_query($query);
-		$returnValue = mysql_fetch_array($result);
+		$result = mysqli_query($mySQL_ConStr, $query);
+		$returnValue = mysqli_fetch_array($result);
 
 		echo json_encode($returnValue);
 	}
@@ -88,9 +96,10 @@ include 'b_ConnectionString.php';
 	// 4   U P D A T E   S E C T I O N   E N T R Y   ( F R O M   A J A X   C A L L )
 	//---------------------------------------------------------------------------
 	function updateSubject()
-	{
-
-		$capturedSubjectID = $_POST['sendSubjectID'];
+	{  
+    require 'b_ConnectionString.php';
+		
+    $capturedSubjectID = $_POST['sendSubjectID'];
 		$capturedSubjectNameData = $_POST['sendSubjectNameData'];
 		$capturedSubjectGradeLevelData = $_POST['sendSubjectGradeLevelData'];
 		
@@ -103,7 +112,7 @@ include 'b_ConnectionString.php';
 		subjectID = '$capturedSubjectID';";
 
 
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		
 	}
 
@@ -114,11 +123,14 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------	
 	function removeSubject()
 	{
+
+    require 'b_ConnectionString.php';
+
 		$capturedSubjectID = $_POST['sendSubjectID'];
 
 		//remove user from employees and accounts table
 		$query = "delete from subjects where subjectID = $capturedSubjectID";
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 		//return 1;
 
 	}
@@ -131,31 +143,33 @@ include 'b_ConnectionString.php';
     function loadGradeLevelsAndSubjectCount()
     {
 
-		$syTermCountArray = array();
+      require 'b_ConnectionString.php';
 
-		$query = 
-				"SELECT 
-					gl.gradeLevelID,
-		        	gl.gradeLevelName,
-		        	IFNULL(COUNT(s.subjectName), 0) AS 'children'
-	    		FROM 
-	    			gradeLevels as gl  
-    
-			    LEFT JOIN 
-			    	subjects as s  
-			    ON s.gradeLevelID_Subjects = gl.gradeLevelID
-			    GROUP by gl.gradeLevelID";
+  		$syTermCountArray = array();
 
-		$tableQuery = mysql_query($query) 
-			or die ("cannot load tables");  
+  		$query = "
+        SELECT 
+				gl.gradeLevelID,
+	      gl.gradeLevelName,
+	      IFNULL(COUNT(s.subjectName), 0) AS 'children'
+    		FROM 
+    			gradeLevels as gl  
+  
+		    LEFT JOIN 
+		    	subjects as s  
+		    ON s.gradeLevelID_Subjects = gl.gradeLevelID
+		    GROUP by gl.gradeLevelID";
+
+  		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
+  			or die ("cannot load tables");  
 
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
-		{
-			$syTermCountArray[] = $getRow;
-		}
+  		while($getRow = mysqli_fetch_assoc($tableQuery))
+  		{
+  			$syTermCountArray[] = $getRow;
+  		}
 
-		echo json_encode($syTermCountArray);
+  		echo json_encode($syTermCountArray);
     }
 
 
@@ -165,6 +179,8 @@ include 'b_ConnectionString.php';
     function loadSubjects()
     {
 
+      require 'b_ConnectionString.php';
+
     	$captured_SubjectYearLevel = $_POST['sendGradeLevel'];
 
         $subjectArray = array();
@@ -172,10 +188,10 @@ include 'b_ConnectionString.php';
         where gradeLevelID_Subjects = $captured_SubjectYearLevel 
         ORDER BY subjectID ASC";
 
-        $tableQuery = mysql_query($query) 
+        $tableQuery = mysqli_query($mySQL_ConStr, $query) 
             or die ("cannot load tables");  
 
-        while($getRow = mysql_fetch_array($tableQuery))
+        while($getRow = mysqli_fetch_array($tableQuery))
         {  
             $subjectArray[] = $getRow;
         }
@@ -193,8 +209,11 @@ include 'b_ConnectionString.php';
 	//---------------------------------------------------------------------------
 	function checkForUser($capturedUserNameData, $capturedPassData)
 	{
+    require 'b_ConnectionString.php';
+
+
  		$query = "SELECT EXISTS (SELECT * from accounts where username = '$capturedUserNameData' and password = '$capturedPassData')";
- 		$result = mysql_query($query);
+ 		$result = mysqli_query($query);
 
  		//account exists.
  		if ($result)

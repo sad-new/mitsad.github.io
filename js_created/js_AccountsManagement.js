@@ -39,38 +39,23 @@ function object_Account()
 $(document).ready(function() 
 {
 
-    var obj_AccountObject = new object_Account();
+  var obj_AccountObject = new object_Account();
 
-    //---------------------------------------------------------------------------
-    // A D D
-    //---------------------------------------------------------------------------
+  //---------------------------------------------------------------------------
+  // A D D
+  //---------------------------------------------------------------------------
 
 	$('#button_Main_Add').click(function(e) 
 	{	
-        obj_AccountObject.purgeVariables();  
+
+    obj_AccountObject.purgeVariables();  
 		$('#addModalResponse').empty(); 
 	});
 
 	$('#button_AddModal_Add').click(function(e) 
 	{
-		e.preventDefault();
 
-		var employeeName = $('#addModal_TextBox_EmployeeName').val();
-		var userName = $('#addModal_TextBox_UserName').val();
-		var password = $('#addModal_TextBox_Password').val();	  
-
-        var isValid = checkTheModalForErrors('add', '0', employeeName, userName, password);
-
-		if (isValid != '') 
-		{
-		 	$('form #addModal_Response').removeClass().addClass('error')
-		 		.html('<strong>Please correct the errors below.</strong>' + isValid ).fadeIn('fast');	
-		}
-
-		else
-	 	{
-            ajax_AddAccount(employeeName, userName, password);	
-	 	}
+    checkAddModal();
 	});
 
 
@@ -81,50 +66,14 @@ $(document).ready(function()
 
 	$('.button_Table_Edit').click(function(e) 
 	{	
-	 	var accountID = this.value; 
-
-	 	retrievedAccountCredentials = ajax_RetrieveAccount(accountID, function(result)
-        {
-            //set obj_AccountObject
-            obj_AccountObject.setVariables
-            (
-                accountID,
-                result['employeeName'],
-                result['userName'],
-                result['password']
-            );    
-
-            //set textboxes
-            $(".form-group #editModal_TextBox_EmployeeName").val(result['employeeName']);
-            $(".form-group #editModal_TextBox_UserName").val(result['userName']);
-            $(".form-group #editModal_TextBox_Password").val(result['password']);        
-        });	
-
-	 	$('#editModalResponse').empty(); 	
+    fillEditModal(this.value, obj_AccountObject);
 	});
 
 
 
 	$('#button_EditModal_Update').click(function(e) 
 	{ 
-		var accountID = obj_AccountObject.getVariables()["accountID"];
-
-		var employeeName = $('#editModal_TextBox_EmployeeName').val();
-		var userName = $('#editModal_TextBox_UserName').val();
-		var password = $('#editModal_TextBox_Password').val();	
-
-        var isValid = checkTheModalForErrors('edit', accountID, employeeName, userName, password);
-
-        if (isValid != '') 
-        {
-            $('form #editModal_Response').removeClass().addClass('error')
-                .html('<strong>Please correct the errors below.</strong>' + isValid ).fadeIn('fast');   
-        }
-
-        else
-        {		
-            ajax_UpdateAccount(accountID, employeeName, userName, password);
-        }
+    checkEditModal(obj_AccountObject);
 
 	});  
 
@@ -157,29 +106,110 @@ $(document).ready(function()
 // N O N   A J A X   F X N
 //---------------------------------------------------------------------------
 
-function checkTheModalForErrors(action, accountID, employeeName, userName, password)
+
+
+async function checkAddModal()
+{
+    var employeeName = $('#addModal_TextBox_EmployeeName').val();
+    var userName = $('#addModal_TextBox_UserName').val();
+    var password = $('#addModal_TextBox_Password').val();   
+
+    await checkModalForErrors('add', '0', employeeName, userName, password)
+    .then(function(result)
+    {
+      if (result != '') 
+      {
+        $('form #addModal_Response').removeClass().addClass('error')
+          .html('<strong>Please correct the errors below.</strong>' + result ).fadeIn('fast'); 
+      }
+
+      else
+      {
+        ajax_AddAccount(employeeName, userName, password)
+      }
+    });
+}
+
+
+
+async function checkEditModal(obj_AccountObject)
+{
+    var accountID = obj_AccountObject.getVariables()["accountID"];
+
+    alert(accountID);
+
+    var employeeName = $('#editModal_TextBox_EmployeeName').val();
+    var userName = $('#editModal_TextBox_UserName').val();
+    var password = $('#editModal_TextBox_Password').val();  
+
+    await checkModalForErrors('edit', accountID, employeeName, userName, password)
+    .then(function(result)
+    {
+      if (result != '') 
+      {
+        $('form #editModal_Response').removeClass().addClass('error')
+            .html('<strong>Please correct the errors below.</strong>' + result ).fadeIn('fast');   
+      }
+
+      else
+      {   
+          ajax_UpdateAccount(accountID, employeeName, userName, password);
+      }
+    });
+}
+
+
+
+async function fillEditModal(accountID, obj_AccountObject)
+{ 
+
+    await ajax_RetrieveAccount(accountID)
+    .then(function(result)
+    {
+        //set obj_AccountObject
+        obj_AccountObject.setVariables
+        (
+            accountID,
+            result['employeeName'],
+            result['userName'],
+            result['password']
+        );    
+
+        //set textboxes
+        $(".form-group #editModal_TextBox_EmployeeName").val(result['employeeName']);
+        $(".form-group #editModal_TextBox_UserName").val(result['userName']);
+        $(".form-group #editModal_TextBox_Password").val(result['password']);        
+    }); 
+
+    $('#editModalResponse').empty();  
+}
+
+
+
+
+
+async function checkModalForErrors(action, accountID, employeeName, userName, password)
 {
     var isValid = '';
     var isRequired = ' is required.';  
     var isTaken = '" is already taken.';
 
     if (employeeName == '' || employeeName <= 1) 
-    {
-        isValid += '</br>Your Name' + isRequired;               
-    }
+    { isValid += '</br>Your Name' + isRequired; }
 
     if (userName == '' || userName <= 1) 
-    {
-        isValid += '</br>Your Username' + isRequired;               
-    }
+    { isValid += '</br>Your Username' + isRequired; }
     
     else
     {
-        ajax_CheckUserNameIfExists(action, accountID, userName, function(result)
+        await ajax_CheckUserNameIfExists(
+          action, accountID, userName)
+        .then(function(result)
         {
             if ((result != null)&&(result == 1))
             {
-                isValid += '</br> the Username "' +userName + isTaken;
+                isValid += '</br> the Username "' 
+                  + userName + isTaken;
             }
         });
     }
@@ -197,47 +227,55 @@ function checkTheModalForErrors(action, accountID, employeeName, userName, passw
 // A J A X   C A L L S
 //---------------------------------------------------------------------------
 
+
+
+
 function ajax_AddAccount(employeeName, userName, password) 
 {
-	var request = $.ajax({	
-    	type: 'POST',
-    	//url: 'Backend/a_Accounts.php',
-    	//url:#formAddTeacher.attr("action"),		
-    	url:$(this).attr("action"),		
-    	data: 
-    	{
-    		sent_Action: "2",
-    		sent_EmployeeName: employeeName,
-    		sent_UserName: userName,
-    		sent_Password: password
-    	},
-    	dataType: 'text',
-    	cache: false,
-    	//timeout: 7000,
-    });
-    
-    request.done(function(data) 
-    { 
-       alert('User Created!'); 
-    });
+  return promise = new Promise((resolve, reject) =>
+  {
+  	var request = $.ajax({	
+      	type: 'POST',
+      	url:$(this).attr("action"),		
+      	data: 
+      	{
+      		sent_Action: "2",
+      		sent_EmployeeName: employeeName,
+      		sent_UserName: userName,
+      		sent_Password: password
+      	},
+      	dataType: 'text',
+      	cache: false
+      });
+      
+      request.done(function(data) 
+      { 
+         alert('User Created!'); 
+         location.reload();
+         resolve();
+      });
 
-    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
-    {
-        alert('Error in User Creation!');           
-    });
+      request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+      {
+          alert('Error in User Creation!');           
+          reject('Error in User Creation!');
+      });
 
-    request.always(function(XMLHttpRequest, status) 
-    {           
-        location.reload();
-    });
+      request.always(function(XMLHttpRequest, status) 
+      {           
+          //location.reload();
+      });
+  });
 };
 
 
-function ajax_RetrieveAccount(accountID, callback)
+function ajax_RetrieveAccount(accountID)
 {
-	$.ajax({	
+
+  return promise = new Promise((resolve, reject) =>
+  {
+    var request = $.ajax({	
 		type: 'POST',
-		//url:$(this).attr("action"),	
 		url: 'Backend/a_AccountsManagement.php',
 		data: 
 		{
@@ -245,25 +283,27 @@ function ajax_RetrieveAccount(accountID, callback)
 			sent_AccountID : accountID
 		},
 		dataType: 'json',
-		async: false,
-		cache: false,
-
-		success: function(data) 
+		cache: false
+    });
+		
+    request.done(function(data) 
 		{ 
-            var accountDetails = 
-            {
-                employeeName : data['employeeName'],
-                userName : data['userName'],
-                password : data['password']
-            };
+      var accountDetails = 
+      {
+          employeeName : data['employeeName'],
+          userName : data['userName'],
+          password : data['password']
+      };
 
-            callback(accountDetails);
-		},
+      resolve(accountDetails);
+		});
 
-		error: function(data, XMLHttpRequest, textStatus, errorThrown) 
+		request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
 		{
 			alert('Error in Retrieving Teacher Info!'); 		
-		}
+      reject(errorThrown);
+		});
+
 	});	
 };
 
@@ -286,7 +326,6 @@ function ajax_UpdateAccount(accountID, employeeName, userName, password)
 		},
 
 		dataType: 'text',
-		async: false,
 		cache: false,
 
 		success: function(data) 
@@ -320,7 +359,6 @@ function ajax_DeleteAccount(accountID)
 		},
 
 		dataType: 'text',
-		async: false,
 		cache: false,
 
 		success: function(data) 
@@ -342,10 +380,8 @@ function ajax_DeleteAccount(accountID)
 	});	
 };
 
-function ajax_CheckUserNameIfExists(action, accountID, userName, callback)
+function ajax_CheckUserNameIfExists(action, accountID, userName)
 {
-
-
     var actionToBeDone = "";  
 
     switch (action)
@@ -358,9 +394,10 @@ function ajax_CheckUserNameIfExists(action, accountID, userName, callback)
             break;
     }
 
+  return promise = new Promise((resolve, reject) =>
+  {
     var request = $.ajax({
         type: 'POST',
-  
         url: 'Backend/a_AccountsManagement.php',
         data: 
         {
@@ -370,18 +407,18 @@ function ajax_CheckUserNameIfExists(action, accountID, userName, callback)
         },
 
         dataType: 'json',
-        async: false,
         cache: false,
     });
 
     request.done(function(data) 
     {
-        callback(data['ifExists']);
+        resolve(data['ifExists']);
     });
 
     request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
     {    
         console.log(errorThrown);
-        callback(false);    
+        reject();    
     }); 
+  });
 }

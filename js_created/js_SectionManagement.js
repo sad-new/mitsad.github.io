@@ -174,9 +174,9 @@ async function loadMainPageControls()
 async function loadMainTable()
 {
 
-   var tableContainer = document.getElementById("mainTableContainer");
+  var tableContainer = document.getElementById("mainTableContainer");
 
-   var gradeLevel = document.getElementById('dropDown_Main_GradeLevel');
+  var gradeLevel = document.getElementById('dropDown_Main_GradeLevel');
 	var gradeLevelText = gradeLevel.options[gradeLevel.selectedIndex].text;
 
 
