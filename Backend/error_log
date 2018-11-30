@@ -1,0 +1,30 @@
+[31-Oct-2018 03:40:10 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 213
+[31-Oct-2018 11:43:03 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:43:11 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:49:24 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:49:27 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:49:38 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:50:28 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:50:43 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:51:11 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:57:41 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:58:00 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 11:59:07 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 12:00:53 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 12:04:50 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[31-Oct-2018 12:05:29 America/Chicago] PHP Warning:  mysqli_fetch_array() expects parameter 1 to be mysqli_result, boolean given in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_SYTermManagement.php on line 212
+[03-Nov-2018 11:46:41 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function mysql_query() in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_ClassManagement.php:413
+Stack trace:
+#0 /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_ClassManagement.php(21): updateClass()
+#1 {main}
+  thrown in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_ClassManagement.php on line 413
+[03-Nov-2018 11:48:25 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function mysql_query() in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Uploads.php:31
+Stack trace:
+#0 /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Uploads.php(16): getActiveTerm()
+#1 {main}
+  thrown in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Uploads.php on line 31
+[05-Nov-2018 09:24:11 America/Chicago] PHP Fatal error:  Uncaught Error: Call to undefined function mysql_query() in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Charts.php:53
+Stack trace:
+#0 /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Charts.php(11): loadSYTerms()
+#1 {main}
+  thrown in /home3/karlkrumbs/public_html/SADNew_v10/Backend/a_Charts.php on line 53
