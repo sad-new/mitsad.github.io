@@ -19,9 +19,13 @@ include 'b_ConnectionString.php';
 	      case '8' : updateClassSubject();break; 
 	      case '9' : deleteClassSubject();break;
 
-        case '21' : load_Main_ClassDetails();break;
-        case '22' : load_Main_SYTerms();break;
-	      case '23' : load_Main_ClassSubjectTable();break;
+        case '22' : load_Main_ClassDetails();break;
+        case '23' : load_Main_SYTerms();break;
+	      case '24' : load_Main_ClassSubjectTable();break;
+
+
+        case '31' : checkNewEntryForExistence(); break;
+        case '32' : checkExistingEntry(); break;       
 
 	      //default : echo 'NOTHING';break;
 	    }
@@ -30,9 +34,11 @@ include 'b_ConnectionString.php';
 
     function checkTableSize()
     {
-      $query = 'SELECT COUNT(*) FROM classSubjects';
-      $result = mysql_query($query); 
-      $tableCount = mysql_fetch_row($result);
+      include 'b_ConnectionString.php';
+
+      $query = 'SELECT COUNT(*) FROM classSubjects WHERE classID_ClassSubjects = 7';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
       return $tableCount[0];
     }
 
@@ -47,9 +53,29 @@ include 'b_ConnectionString.php';
         (select count(*) FROM sections) as sectionCount 
       ";
 
-        $result = mysql_query($query); 
-        $otherTableCount = mysql_fetch_row($result);
+        $result = mysqli_query($mySQL_ConStr, $query); 
+        $otherTableCount = mysqli_fetch_row($result);
         return $otherTableCount;
+    }
+
+
+
+
+    function loadClassDetails()
+    {
+      include 'b_ConnectionString.php';
+
+      $captured_ClassID = $_POST['sent_ClassID'];
+
+      $query = "select * from classes 
+      where classID = $captured_ClassID";
+
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
+      or die ("cannot load tables");      
+
+    $classDetails = mysqli_fetch_assoc($tableQuery); 
+    echo json_encode($classDetails);
+
     }
 
 
@@ -57,13 +83,22 @@ include 'b_ConnectionString.php';
 	// L O A D   M A I N P A G E
 	//---------------------------------------------------------------------------
 
-  // 21
+
+
+
+
+  // 22
   function load_Main_ClassDetails()
   {
+
+    include 'b_ConnectionString.php';
+
+
     $captured_ClassID = $_POST['sent_ClassID'];
 
     $query = 
       "SELECT
+      merged.gradeLevelName,
       merged.sectionName,
       merged.schoolYear 
 
@@ -71,6 +106,11 @@ include 'b_ConnectionString.php';
       (
         SELECT * from classes as c
 
+        INNER JOIN
+        (SELECT gradeLevelID, gradeLevelName from gradeLevels) as gl 
+        on gl.gradeLevelID = c.gradeLevelID_Classes 
+         
+          
         INNER JOIN
         (SELECT sectionID, sectionName from sections) as se 
         on se.sectionID = c.sectionID_Classes 
@@ -82,17 +122,21 @@ include 'b_ConnectionString.php';
 
       WHERE merged.classID = $captured_ClassID";
 
-    $tableQuery = mysql_query($query) 
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
       or die ("cannot load tables");      
 
-    $classDetails = mysql_fetch_assoc($tableQuery); 
-    echo json_encode($classDetails);
+    $classSubjectDetails = mysqli_fetch_assoc($tableQuery); 
+    echo json_encode($classSubjectDetails);
   }
 
 
-  // 22
+  // 23
   function load_Main_SYTerms()
   {
+
+    include 'b_ConnectionString.php';
+
+
     $captured_ClassID = $_POST['sent_ClassID'];
     $syTermArray = [];
 
@@ -132,10 +176,10 @@ include 'b_ConnectionString.php';
         ORDER by syTermIDValues.syTermID ASC;";
 
 
-    $tableQuery = mysql_query($query) 
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
       or die ("cannot load tables");  
 
-    while($getRow = mysql_fetch_assoc($tableQuery))
+    while($getRow = mysqli_fetch_assoc($tableQuery))
     {
          $syTermArray[] = $getRow;
     }
@@ -145,9 +189,11 @@ include 'b_ConnectionString.php';
   }
 
 
-  // 23
+  // 24
 	function load_Main_ClassSubjectTable()
 	{
+    include 'b_ConnectionString.php';
+
     $captured_ClassID = $_POST['sent_ClassID'];
 		$captured_SYTermID = $_POST['sent_SYTermID'];
 
@@ -158,10 +204,13 @@ include 'b_ConnectionString.php';
 			SELECT
 
 				merged.classSubjectID,
+
 				merged.classID_ClassSubjects, 
 		    merged.className, 
+
 		    merged.subjectID_ClassSubjects,
 		    merged.subjectName, 
+
 		    merged.teacherID_ClassSubjects,
 		    merged.employeeName
 
@@ -189,10 +238,10 @@ include 'b_ConnectionString.php';
       ORDER by merged.classSubjectID ASC
 		";
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$classSubjectArray[] = $getRow;
 		}		
@@ -215,6 +264,7 @@ include 'b_ConnectionString.php';
   // 4
 	function load_Main_Subjects()
 	{
+    include 'b_ConnectionString.php';
 
 		$captured_ClassID = $_POST['sent_ClassID'];
 
@@ -239,10 +289,10 @@ include 'b_ConnectionString.php';
         ORDER BY su.subjectID
       ";  
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$subjectArray[] = $getRow;
 		}
@@ -254,13 +304,15 @@ include 'b_ConnectionString.php';
   // 5
 	function load_Main_Teachers()
 	{
+    include 'b_ConnectionString.php';
+
 		$teacherArray = array();
 
 		$query = 'SELECT * FROM employees ORDER BY employeeID ASC';
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 		or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$teacherArray[] = $getRow;
 		}
@@ -279,41 +331,29 @@ include 'b_ConnectionString.php';
   // 6
 	function submitNewClassSubject()
 	{
+    
+    include 'b_ConnectionString.php';
+
+
     $captured_SYTermID = $_POST['sent_SYTermID'];
     $captured_ClassID = $_POST['sent_ClassID'];
 		$captured_SubjectID = $_POST['sent_SubjectID'];
 		$captured_TeacherID = $_POST['sent_AdviserID'];
 
 
+    $query = "INSERT INTO classSubjects 
+    (syTermID_ClassSubjects, classID_ClassSubjects, 
+    subjectID_ClassSubjects, teacherID_ClassSubjects) 
+    
+    VALUES 
+    (
+      '".$captured_SYTermID."',
+      '$captured_ClassID',
+      '$captured_SubjectID',
+      '$captured_TeacherID'
+    )";
 
-    $firstQuery = 
-      "SELECT syTermID from syTerms 
-      WHERE schoolYear = 
-      (
-        select schoolYear from syterms 
-        where syTermID = $captured_SYTermID
-      )";
-
-      $tableQuery = mysql_query($firstQuery) 
-          or die ("cannot load tables");  
-
-
-
-      while($getRow = mysql_fetch_assoc($tableQuery))
-      {
-        $secondQuery = "INSERT INTO classSubjects (syTermID_ClassSubjects, classID_ClassSubjects, subjectID_ClassSubjects, teacherID_ClassSubjects) 
-        
-        VALUES 
-        (
-          '".$getRow['syTermID']."',
-          '$captured_ClassID',
-          '$captured_SubjectID',
-          '$captured_TeacherID'
-        )";
-
-        mysql_query($secondQuery);
-      }
-
+    mysqli_query($mySQL_ConStr, $query);
 
     echo json_encode(true);      
 	}
@@ -322,12 +362,16 @@ include 'b_ConnectionString.php';
   // 7
 	function retrieveClassSubject()
 	{
+
+    include 'b_ConnectionString.php';
+
+
 		$captured_ClassSubjectID = $_POST['sent_ClassSubjectID'];
 
 		$query = "SELECT * FROM classSubjects WHERE classSubjectID = '$captured_ClassSubjectID'";
 
-		$result = mysql_query($query);
-		$returnValue = mysql_fetch_array($result);
+		$result = mysqli_query($mySQL_ConStr, $query);
+		$returnValue = mysqli_fetch_array($result);
 
 		echo json_encode($returnValue);
 	}
@@ -336,74 +380,26 @@ include 'b_ConnectionString.php';
   // 8
 	function updateClassSubject()
 	{
+
+    include 'b_ConnectionString.php';
+
+
     $captured_ClassSubjectID   = $_POST['sent_ClassSubjectID'];
 
 		$captured_SubjectID = $_POST['sent_SubjectID'];
 		$captured_TeacherID = $_POST['sent_TeacherID'];
 
-    $captured_AffectedTerms = $_POST['sent_AffectedTerms'];
 
-    switch ($captured_AffectedTerms) 
-    {
-      case 1: //update the four terms
-        
-        $firstQuery = 
-        "
-          SELECT syTermID 
-          FROM syTerms 
-          WHERE schoolYear = 
-          (                       
-            SELECT schoolYear 
-            FROM syTerms 
-            WHERE syTermID = 
-            (
-              SELECT syTermID_ClassSubjects 
-              FROM classsubjects
-              WHERE classSubjectID = '".$captured_ClassSubjectID."'
-            )
-          )
-        ";
-        $firstTableQuery = mysql_query($firstQuery);
+    $query = 
+    "
+      UPDATE classSubjects 
+      SET 
+      teacherID_ClassSubjects = '$captured_TeacherID'
+      WHERE
+      classSubjectID = '$captured_ClassSubjectID'
+    ";
 
-        while($getRow = mysql_fetch_array($firstTableQuery))
-        {
-          $secondQuery = 
-          "
-            UPDATE classSubjects 
-            SET 
-            teacherID_ClassSubjects = '$captured_TeacherID'
-
-            WHERE 
-              (subjectID_ClassSubjects = '$captured_SubjectID') 
-              AND
-              (syTermID_ClassSubjects = '".$getRow[0]."') 
-          ";
-
-          mysql_query($secondQuery);
-        }
-
-        break;
-
-
-      case 2: //update the selected term
-
-        $query = 
-        "
-          UPDATE classSubjects 
-          SET 
-          teacherID_ClassSubjects = '$captured_TeacherID'
-          WHERE
-          classSubjectID = '$captured_ClassSubjectID'
-        ";
-
-        mysql_query($query);
-
-        break;
-      
-      default:
-        break;
-    }
-
+    mysqli_query($mySQL_ConStr, $query);
 
     echo json_encode(true);
 	}
@@ -412,6 +408,10 @@ include 'b_ConnectionString.php';
   // 9
 	function deleteClassSubject()
 	{
+
+    include 'b_ConnectionString.php';
+
+    
 		$captured_ClassSubjectID   = $_POST['sent_ClassSubjectID'];
 
         $subjectQuery = 
@@ -420,8 +420,8 @@ include 'b_ConnectionString.php';
           FROM classsubjects 
           WHERE classSubjectID = '$captured_ClassSubjectID'
         ";
-        $subjectTableQuery = mysql_query($subjectQuery);
-        $subjectID = mysql_fetch_array($subjectTableQuery)[0];
+        $subjectTableQuery = mysqli_query($mySQL_ConStr, $subjectQuery);
+        $subjectID = mysqli_fetch_array($subjectTableQuery)[0];
 
 
         $syTermQuery = 
@@ -442,10 +442,10 @@ include 'b_ConnectionString.php';
         ";
 
 
-        $syTermTableQuery = mysql_query($syTermQuery);
+        $syTermTableQuery = mysqli_query($mySQL_ConStr, $syTermQuery);
 
 
-        while($getRow = mysql_fetch_array($syTermTableQuery))
+        while($getRow = mysqli_fetch_array($syTermTableQuery))
         {
           $deleteQuery = 
           "
@@ -454,12 +454,68 @@ include 'b_ConnectionString.php';
             AND
             (syTermID_ClassSubjects = '".$getRow[0]."')
           ";
-          mysql_query($deleteQuery);
+          mysqli_query($mySQL_ConStr, $deleteQuery);
         }
 
 
     echo json_encode(true);
 	}
 
+
+
+
+
+
+  // 31  
+
+  function checkNewEntryForExistence()
+  {
+    include 'b_ConnectionString.php';
+
+    $captured_ClassID = $_POST['sent_ClassID']; 
+    $captured_SYTermID = $_POST['sent_SYTermID']; 
+    $captured_SubjectID = $_POST['sent_SubjectID'];
+
+
+    $query = 
+    "SELECT 1 as 'exists' FROM classsubjects
+    WHERE 
+    (classID_ClassSubjects = '$captured_ClassID') AND 
+    (syTermID_ClassSubjects = '$captured_SYTermID') AND 
+    (subjectID_ClassSubjects = '$captured_SubjectID')";
+
+      $result = mysqli_query($mySQL_ConStr, $query);
+      $returnValue = mysqli_fetch_array($result);
+
+      echo json_encode($returnValue['exists']);  
+  }
+
+
+
+  // 32  
+
+  function checkExistingEntry()
+  {
+    include 'b_ConnectionString.php';
+
+    $captured_ClassID = $_POST['sent_ClassID']; 
+    
+    $captured_SYTermID = $_POST['sent_SYTermID']; 
+    $captured_SubjectID = $_POST['sent_SubjectID'];
+    $captured_ClassSubjectID = $_POST['sent_ClassSubjectID'];
+
+    $query = 
+    "SELECT 1 as 'exists' FROM classsubjects
+    WHERE 
+    (classID_ClassSubjects = '$captured_ClassID') AND 
+    (syTermID_ClassSubjects = '$captured_SYTermID') AND 
+    (subjectID_ClassSubjects = '$captured_SubjectID') AND 
+    (classSubjectID != '$captured_ClassSubjectID')";
+
+      $result = mysqli_query($mySQL_ConStr, $query);
+      $returnValue = mysqli_fetch_array($result);
+
+      echo json_encode($returnValue['exists']);  
+  }
 
 ?>

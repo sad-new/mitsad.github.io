@@ -1,6 +1,5 @@
-<?php
-//session_destroy();
-session_start();
+<?php 
+    session_start();
 
 	$username  = isset($_SESSION['userName']) ? $_SESSION['userName'] : '';
 	$userType  = isset($_SESSION['userType']) ? $_SESSION['userType'] : '';

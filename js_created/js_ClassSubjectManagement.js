@@ -5,17 +5,20 @@
 function object_Class()
 {
   var classID = "";
-  var schoolYear = "";  
+  var className = "";  
   var sectionName = "";
+  var schoolYear = "";  
+
+
 
   this.setClassID = function(var_ClassID)
   {
     classID = var_ClassID;
   };
 
-  this.setSectionName = function(var_SectionName)
+  this.setClassName = function(var_ClassName)
   {
-    sectionName = var_SectionName;
+    className = var_ClassName;
   };
 
   this.setSchoolYear = function(var_SchoolYear)
@@ -23,18 +26,26 @@ function object_Class()
     schoolYear = var_SchoolYear;
   };
 
-  this.getVariables = function()
+  this.setSectionName = function(var_SectionName)
   {
-    var classDetails = new Object();
-
-    classDetails["classID"] = classID;
-    classDetails["schoolYear"] = schoolYear;
-    return classDetails;
+    sectionName = var_SectionName;
   };
+
+
 
   this.getClassID = function()
   {
     return classID;
+  }
+
+  this.getClassName = function()
+  {
+    return className;
+  }
+
+  this.getSchoolYear = function()
+  {
+    return schoolYear;
   }
 
   this.getSectionName = function()
@@ -42,14 +53,10 @@ function object_Class()
     return sectionName;
   }
 
-  this.getSchoolYear = function()
-  {
-    return schoolYear;
-  }
 }
 
 
-function object_ClassSubject()
+function object_ClassSubject()                
 {
 	var classSubjectID = "";
   var subject = "";
@@ -70,40 +77,56 @@ function object_ClassSubject()
         schoolYear = var_SchoolYear;
     };
 
-    this.getVariables = function()
-    {
-        var classSubjectDetails = new Object();
 
-        classSubjectDetails["classSubjectID"] = classSubjectID;
-        classSubjectDetails["subject"] = subject;  
-        classSubjectDetails["teacher"] = teacher;
-
-        return classSubjectDetails;
-    };
 
     this.getClassSubjectID = function()
     {
       return classSubjectID;
+    }
+
+    this.gettSubject = function()
+    {
+        return subject;
+    };
+
+    this.getTeacher = function()
+    {
+        return schoolYear;
+    };
+
+
+
+    this.purgeVariables = function()
+    {
+      classSubjectID = "";
+      subject = "";
+      teacher = "";
     }
 }
 
 
 $(document).ready(function() 
 {
+  object_ClassObject = new object_Class();
+  object_ClassSubjectObject = new object_ClassSubject();
 
-  object_Class = new object_Class();
 
-  let urlParams = new URLSearchParams(window.location.search);
-  object_Class.setClassID(urlParams.get('ID'));
-     
-  object_ClassSubject = new object_ClassSubject();  
+  var selected = localStorage.getItem('classID');
+    if (selected == null)
+  {
+    window.location = "ClassManagement.php";
+  }
 
-  mainPage_Load_Items(object_Class.getClassID(), object_Class);
+  else
+  {
+    object_ClassObject.setClassID(selected);
+    mainPage_Load_Items(object_ClassObject.getClassID(), object_ClassObject);
+  }
 
 
   $(document).on("change", "#dropDown_Main_SYTerm", function()
   {
-    mainPage_Load_Table(object_Class.getClassID(), this.value); 
+    mainPage_Load_Table(object_ClassObject.getClassID(), this.value); 
   });
 
 //---------------------------------------------------------------------------
@@ -113,12 +136,21 @@ $(document).ready(function()
 
   $(document).on("click", "#button_Main_AddClassSubject", function()
   {
-    modal_Load_DropDowns('add', object_Class.getClassID());
+    modal_Load_DropDowns('add', object_ClassObject.getClassID());
+
+    term = $("#dropDown_Main_SYTerm option:selected").text();
+    term = term.substr(0, term.indexOf('('));
+
+    document.getElementById("addModal_Heading").innerHTML = "Add a new Class for <b> "
+    + object_ClassObject.getSectionName() +"</b> in <b>" + term +"</b>";
+
   });
 
 	$('#button_AddModal_AddClassSubject').click(function(e) 
 	{
-		ajax_AddClassSubject(object_Class.getClassID());
+    $('#response').empty();
+    object_ClassSubjectObject.purgeVariables();
+    addClassSubject(object_ClassSubjectObject);
 	});
 
 
@@ -136,44 +168,19 @@ $(document).ready(function()
 
   $(document).on("click", ".button_Main_EditClassSubject", function() 
 	{	
+    $('#response').empty();
 
-    document.getElementById("radio_Edit_AllTerms").checked = true;
+    object_ClassSubjectObject.purgeVariables();
+    object_ClassSubjectObject.setClassSubjectID(this.value);	
 
-    object_ClassSubject.setClassSubjectID(this.value);	
-
-    var syTermID = document.getElementById("dropDown_Main_SYTerm").value;
-		modal_Load_DropDowns('edit', object_Class.getClassID())
-    .then(function(result)
-    {
-			ajax_RetrieveClassSubject(object_ClassSubject.getClassSubjectID());
-    });
+    retrieveClassSubject(object_ClassSubjectObject);
 	});
 
 
 	 $(document).on( "click", "#button_EditModal_UpdateClassSubject", function() 
 	{
-		var var_ClassSubjectID = object_ClassSubject.getClassSubjectID();
-
-		var var_Subject = document.getElementById("dropDown_EditModal_Subject").value;
-		var var_Teacher = document.getElementById("dropDown_EditModal_Teacher").value;
-
-    var affectedTerms = 0; 
-
-    if (document.getElementById("radio_Edit_AllTerms").checked == true) {
-      affectedTerms = 1; 
-    }
-    else if (document.getElementById("radio_Edit_SingleTerm").checked == true) {
-      affectedTerms = 2; 
-    }
-    else
-    { 
-    }
-
-    if (affectedTerms > 0)
-    {
-		  ajax_UpdateClassSubject(var_ClassSubjectID, var_Subject, var_Teacher, affectedTerms);
-	  }
-
+    $('#response').empty();
+    updateClassSubject(object_ClassObject, object_ClassSubjectObject);
   });
 
 	$('#dropDown_EditModal_SchoolYear').change(function(e) 
@@ -200,7 +207,7 @@ $(document).ready(function()
 
     $(document).on( "click", ".button_Main_DeleteClassSubject", function() 
     {
-		  object_ClassSubject.setClassSubjectID(this.value);
+		  object_ClassSubjectObject.setClassSubjectID(this.value);
       
       var deleteModal_TextBox = document.getElementById('deleteModal_Message');
       deleteModal_TextBox.innerHTML = "";
@@ -214,7 +221,7 @@ $(document).ready(function()
 
       var deleteModal_Text2 = 
       " Take note that all instances of this subject in section "
-        +object_Class.getSectionName() + " in SY " + object_Class.getSchoolYear() + " will be removed.";
+        +object_ClassObject.getSectionName() + " in SY " + object_ClassObject.getSchoolYear() + " will be removed.";
 
 
       deleteModal_TextBox.appendChild(deleteModal_Span);
@@ -228,9 +235,10 @@ $(document).ready(function()
 	$('#button_DeleteModal_DeleteClassSubject').click(function(e) 
 	{
 
-		var var_ClassSubjectID = object_ClassSubject.getClassSubjectID();
+		var var_ClassSubjectID = object_ClassSubjectObject.getClassSubjectID();
 		ajax_DeleteClassSubject(var_ClassSubjectID);
 	});
+
 
 });
 
@@ -243,6 +251,7 @@ $(document).ready(function()
 async function mainPage_Load_Items(var_ClassID, object_Class)
 {
   await ajax_LoadMainSYTerm(var_ClassID);
+
   var syTermID = document.getElementById('dropDown_Main_SYTerm');
   var var_SYTermID = syTermID.options[syTermID.selectedIndex].value
 
@@ -376,11 +385,6 @@ async function modal_Load_DropDowns(action, var_ClassSubjectID)
 }
 
 
-async function modal_SetEditDropDownChoices()
-{
-
-}
-
 
 function emptyDropDown(dropDown)
 {
@@ -394,6 +398,128 @@ function initializeSelectedValue(dropDown)
 {
 	dropDown.options[0].selected = "Selected";    
 }
+
+
+
+
+async function addClassSubject(Object_ClassObject)
+{
+
+  var invalidCounter = 0;
+  var errorMsg = "";
+  var required = ' is required.';
+
+  var classID = object_ClassObject.getClassID();
+  var syTermID = $('#dropDown_Main_SYTerm').val();
+  var subjectID = $('#dropDown_AddModal_Subject').val();
+  var teacherID = $('#dropDown_AddModal_Teacher').val();
+
+  if (syTermID == null)
+  {
+        invalidCounter++;
+        errorMsg += '</br>A SchoolYear Term is required.';
+  }
+
+  if (subjectID == null)
+  {
+        invalidCounter++;
+        errorMsg += '</br>A Subject is required.';
+  }
+
+  if (teacherID == null)
+  {
+        invalidCounter++;
+        errorMsg += '</br>A Teacher is required.';
+  }
+
+  await ajax_CheckNewEntryForExistence(classID, syTermID, subjectID)
+  .then(function(result)
+  {
+      if (result == 1)
+      {
+        invalidCounter++;
+        errorMsg += '</br>Class already exists.';
+      }
+  });
+
+  
+  if (invalidCounter == 1) 
+  {
+    $('form #response').removeClass().addClass('error')
+      .html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');  
+  }
+  else
+  {
+    ajax_AddClassSubject(object_ClassObject.getClassID());
+  }
+
+}
+
+
+async function retrieveClassSubject(obj_ClassSubjectObject)
+{
+    var syTermID = document.getElementById("dropDown_Main_SYTerm").value;
+    await modal_Load_DropDowns('edit', object_ClassObject.getClassID())
+    .then(function(result)
+    {
+      ajax_RetrieveClassSubject(object_ClassSubjectObject.getClassSubjectID());
+    });
+}
+
+
+async function updateClassSubject(object_classObject, object_ClassSubjectObject)
+{
+    
+    var invalidCounter = 0;
+    var errorMsg = "";
+    var required = ' is required.';
+
+    var classID = object_ClassObject.getClassID();
+    var syTermID = $('#dropDown_Main_SYTerm').val();
+    var subjectID = $('#dropDown_EditModal_Subject').val();
+    var teacherID = $('#dropDown_EditModal_Teacher').val();
+    var classSubjectID = object_ClassSubjectObject.getClassSubjectID();
+
+
+    if (syTermID == null)
+    {
+          invalidCounter++;
+          errorMsg += '</br>A SchoolYear Term is required.';
+    }
+
+    if (subjectID == null)
+    {
+          invalidCounter++;
+          errorMsg += '</br>A Subject is required.';
+    }
+
+    if (teacherID == null)
+    {
+          invalidCounter++;
+          errorMsg += '</br>A Teacher is required.';
+    }
+
+    await ajax_CheckExistingEntry(classID, syTermID, subjectID, classSubjectID)
+    .then(function(result)
+    {
+        if (result == 1)
+        {
+          invalidCounter++;
+          errorMsg += '</br>Class already exists.';
+        }
+    });
+
+  if (invalidCounter == 1) 
+  {
+    $('form #response').removeClass().addClass('error')
+      .html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');  
+  }
+  else
+  {
+    ajax_UpdateClassSubject(classSubjectID, subjectID, teacherID);
+  }
+}
+
 
 
 //---------------------------------------------------------------------------
@@ -511,6 +637,7 @@ function ajax_AddClassSubject(var_ClassID)
 	var addSubject = document.getElementById("dropDown_AddModal_Subject").value;
 	var addTeacher = document.getElementById("dropDown_AddModal_Teacher").value;
 
+
 	var request = $.ajax({	
 		type: 'POST',
 		url: 'Backend/a_ClassSubjectManagement.php',	
@@ -534,7 +661,7 @@ function ajax_AddClassSubject(var_ClassID)
 
 	request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
 	{
-		alert('Failure!');
+		alert('Error in adding ClassSubject! ' + errorThrown);
 	});
 
 }
@@ -586,7 +713,7 @@ function ajax_RetrieveClassSubject(classSubjectID)
 	});	
 }
 
-function ajax_UpdateClassSubject(var_ClassSubjectID, var_Subject, var_Teacher, var_AffectedTerms)
+function ajax_UpdateClassSubject(var_ClassSubjectID, var_Subject, var_Teacher)
 {
 
 	var request = $.ajax({	
@@ -599,8 +726,6 @@ function ajax_UpdateClassSubject(var_ClassSubjectID, var_Subject, var_Teacher, v
 			sent_ClassSubjectID: var_ClassSubjectID,
 			sent_SubjectID:      var_Subject,
 			sent_TeacherID:      var_Teacher,
-
-      sent_AffectedTerms: var_AffectedTerms
 		},
 		dataType: 'JSON', 
 		cache: false
@@ -663,7 +788,7 @@ function ajax_LoadClassDetails(var_ClassID)
         url: 'Backend/a_ClassSubjectManagement.php',   
         data: 
         {
-            action: "21",
+            action: "22",
             sent_ClassID: var_ClassID
         },
         dataType: 'json', 
@@ -671,7 +796,7 @@ function ajax_LoadClassDetails(var_ClassID)
     });    
     request.done(function(result) 
     {
-      header.innerHTML = "List of Registered Subjects for Section <b>" + result["sectionName"] + "</b> in SY <b>" + result["schoolYear"] + "</b>";
+      header.innerHTML = "List of Registered Subjects for <b>" + result["gradeLevelName"] + "</b> section <b>" + result["sectionName"] + "</b> in SY <b>" + result["schoolYear"] + "</b>";
       resolve(result);
     });
 
@@ -697,7 +822,7 @@ function ajax_LoadMainSYTerm(var_ClassID)
           url: 'Backend/a_ClassSubjectManagement.php',   
           data: 
           {
-              action: "22",
+              action: "23",
               sent_ClassID: var_ClassID
           },
           dataType: 'json', 
@@ -736,7 +861,7 @@ function ajax_GetClassTableEntries(var_ClassID, var_SYTermID)
             url: 'Backend/a_ClassSubjectManagement.php',   
             data : 
             {
-                action : "23",
+                action : "24",
                 sent_ClassID : var_ClassID,
                 sent_SYTermID : var_SYTermID
             },
@@ -756,3 +881,71 @@ function ajax_GetClassTableEntries(var_ClassID, var_SYTermID)
         });    
     });
 }
+
+
+
+
+
+function ajax_CheckNewEntryForExistence(classID, syTermID, subjectID)
+{
+    return promise = new Promise(function(resolve, reject){
+        var request = $.ajax({  
+            type: 'POST',
+            url: 'Backend/a_ClassSubjectManagement.php',   
+            data : 
+            {
+                action : "31",
+                sent_ClassID : classID,
+                sent_SYTermID : syTermID,
+                sent_SubjectID : subjectID
+            },
+            dataType: 'JSON', 
+            cache: false
+        });    
+
+        request.done(function(data) 
+        {
+            resolve(data);
+        });
+
+        request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+        {
+            console.log('ERR: Cannot Check Entry for Existence.\n' + errorThrown);   
+            reject();    
+        });    
+    });  
+}
+
+function ajax_CheckExistingEntry(classID, schoolYearID, subjectID, classSubjectID)
+{
+    return promise = new Promise(function(resolve, reject){
+        var request = $.ajax({  
+            type: 'POST',
+            url: 'Backend/a_ClassSubjectManagement.php',   
+            data : 
+            {
+                action : "32",
+                sent_ClassID : classID,
+                sent_SYTermID : schoolYearID,
+                sent_SubjectID : subjectID,
+                sent_ClassSubjectID : classSubjectID
+            },
+            dataType: 'JSON', 
+            cache: false
+        });    
+
+        request.done(function(data) 
+        {
+            resolve(data);
+        });
+
+        request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+        {
+            console.log('ERR: Cannot Check Entry for Existence.\n' + errorThrown);   
+            reject();    
+        });    
+    });  
+
+}
+
+

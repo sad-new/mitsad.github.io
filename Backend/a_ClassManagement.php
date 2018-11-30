@@ -12,9 +12,8 @@ include 'b_ConnectionString.php';
 
    	    	case '1' : load_Modal_SchoolYears();break;
           case '2' : load_Modal_GradeLevels();break;
-   	    	case '3' : load_Modal_Sections();break;
-          case '4' : load_Modal_Subjects();break;
-          case '5' : load_Modal_Teachers();break;
+          case '3' : load_Modal_Sections();break;
+
 
 	       	case '11' : submitNewClass();break;
 	       	case '12' : retrieveClass();break; 
@@ -25,188 +24,16 @@ include 'b_ConnectionString.php';
 	        case '22' : load_Main_GradeLevels(); break;
 	        case '23' : load_Main_ClassTableEntries();break;
 
+
+          case '31' : checkNewEntryForExistence(); break;
+          case '32' : checkExistingEntry(); break;
+
+
 	      //default : echo 'NOTHING';break;
 	    }
 	}
 
 
-   //---------------------------------------------------------------------------
-   // _ M A I N _   A J A X E S
-   //---------------------------------------------------------------------------
-
-   // 21 
-	function load_Main_SYTerms()
-	{
-    include 'b_ConnectionString.php';
-
-
-		$syTermArray = [];
-
-		$query = 
-         "SELECT 
-            sy.syTermID,
-            sy.schoolYear, sy.termNumber,
-            IFNULL(COUNT(c.syTermID_Classes), 0) AS 'children'
-          
-          FROM                 
-          (
-             SELECT * from syterms 
-          ) AS sy  
-       
-          LEFT JOIN 
-           (
-              SELECT * FROM classes 
-           ) as c 
-          ON c.syTermID_Classes = sy.syTermID
-          GROUP by sy.schoolYear ASC, sy.termNumber ASC;
-         ";
-
-
-		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
-			or die ("cannot load tables");  
-
-
-		while($getRow = mysqli_fetch_assoc($tableQuery))
-		{
-         $syTermArray[] = $getRow;
-		}
-
-		echo json_encode($syTermArray);
-
-	}
-
-
- // 22
-  function load_Main_GradeLevels()
-  {
-    include 'b_ConnectionString.php';
-
-    $captured_SYTermIDStart = $_POST['sent_SYTermIDStart'];
-
-    $GradeLevelArray = [];
-    
-    $query = 
-       "
-          SELECT 
-             gl.gradeLevelID,
-             gl.gradeLevelName,
-             IFNULL(COUNT(c.gradeLevelID_Classes), 0) AS 'children'
-          FROM 
-             gradeLevels as gl  
-  
-           LEFT JOIN 
-             (
-                SELECT * FROM classes 
-                WHERE syTermID_Classes = '".$captured_SYTermIDStart."'
-             ) as c 
-           ON c.gradeLevelID_Classes = gl.gradeLevelID
-           GROUP by gl.gradeLevelID
-       ";
-
-
-      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
-          or die ("cannot load tables");  
-
-
-      while($getRow = mysqli_fetch_assoc($tableQuery))
-      {
-          $gradeLevelArray[] = $getRow;
-      }
-
-      echo json_encode($gradeLevelArray); 
-
-  }
-
-   // 23
-	function load_Main_ClassTableEntries()
-	{
-    include 'b_ConnectionString.php';
-
-    $captured_GradeLevelID = $_POST['sent_GradeLevel']; 
-    $captured_SYTermID = $_POST['sent_SYTermID'];
-
-	  $sectionArray = array();
-
-      $query = 
-          '
-          SELECT 
-          sectionID, 
-          sectionName, 
-          IFNULL(COUNT(c.sectionID_Classes), 0) AS "children"
-          FROM sections as s
-
-          LEFT JOIN 
-          (
-            SELECT 
-            sectionID_Classes, 
-            sytermID_Classes
-            FROM classes
-            WHERE sytermID_Classes = '.$captured_SYTermID.'
-            GROUP BY sectionID_Classes
-            
-          ) as c
-
-          ON c.sectionID_Classes = s.sectionID
-          WHERE s.gradeLevelID_Sections = '.$captured_GradeLevelID.'
-          GROUP BY s.sectionID       
-          ';                
-
-      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
-          or die ("cannot load tables");  
-
-      $counter = 0;
-      while($getRow = mysqlI_fetch_assoc($tableQuery))
-      {
-          $sectionArray[$counter]['sectionID'] = $getRow['sectionID'];
-          $sectionArray[$counter]['sectionName'] = $getRow['sectionName'];
-          $sectionArray[$counter]['children'] = $getRow['children'];
-          $sectionArray[$counter]['classTable'] = load_Main_ClassTableEntries_Subtable(
-            $captured_SYTermID, $getRow['sectionID']);
-
-
-          $counter++;
-      }
-
-
-		echo json_encode($sectionArray);
-	}
-
-
-  function load_Main_ClassTableEntries_Subtable($var_SYTermID, $var_SectionID)
-  {
-    include 'b_ConnectionString.php';
-
-    $classArray = array();
-    
-    $query = 
-    '
-    SELECT merged.classID, merged.subjectName, merged.subjectID, merged.employeeName
-    FROM
-    (
-      SELECT * FROM classes
-
-      INNER JOIN subjects 
-      ON classes.subjectID_Classes = subjects.subjectID
-      
-      INNER JOIN employees 
-      ON classes.adviserID_Classes = employees.employeeID
-
-      WHERE classes.sectionID_Classes = '.$var_SectionID.' 
-      AND classes.syTermID_Classes = '.$var_SYTermID.'
-    ) as merged
-    ';
-
-    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
-    or die ("cannot load tables");  
-
-
-    while($getRow = mysqli_fetch_assoc($tableQuery))
-    {
-        $classArray[] = $getRow;
-    }
-
-    return $classArray;
-  }
 
 
 	//---------------------------------------------------------------------------
@@ -220,7 +47,7 @@ include 'b_ConnectionString.php';
 
 		$syTermArray = array();
 
-		$query = 'SELECT * FROM syterms';
+		$query = 'SELECT * FROM syterms WHERE termNumber = 1';
 		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
@@ -243,7 +70,7 @@ include 'b_ConnectionString.php';
       $gradeLevelArray = array();
 
        $query = 
-         "SELECT gradeLevelID, gradeLevelName FROM gradeLevels 
+         "SELECT gradeLevelID, gradeLevelName FROM gradelevels 
          ORDER BY gradeLevelID ASC";
 
       $tableQuery = mysqli_query($mySQL_ConStr, $query) 
@@ -269,9 +96,9 @@ include 'b_ConnectionString.php';
 
 		$query = 
       'SELECT * FROM sections 
-		  INNER JOIN gradeLevels 
-		  ON gradeLevels.gradeLevelID = sections.gradeLevelID_Sections
-      WHERE gradeLevels.gradeLevelID = '.$captured_GradeLevel.';';
+		  INNER JOIN gradelevels 
+		  ON gradelevels.gradeLevelID = sections.gradeLevelID_Sections
+      WHERE gradelevels.gradeLevelID = '.$captured_GradeLevel.';';
 		
 
       $tableQuery = mysqli_query($mySQL_ConStr, $query) 
@@ -286,52 +113,6 @@ include 'b_ConnectionString.php';
 	}
 
 
-  // 4
-  function load_Modal_Subjects()
-  {
-    include 'b_ConnectionString.php';
-
-    $captured_GradeLevel = $_POST['sent_GradeLevel'];
-    $subjectArray = array();
-
-
-    $query = 
-      'SELECT * FROM subjects 
-      INNER JOIN gradeLevels 
-      ON gradeLevels.gradeLevelID = subjects.gradeLevelID_Subjects
-      WHERE gradeLevels.gradeLevelID = '.$captured_GradeLevel.';';
-    
-
-      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
-      or die ("cannot load tables");  
-
-    while($getRow = mysqli_fetch_assoc($tableQuery))
-    {
-      $subjectArray[] = $getRow;
-    }
-
-    echo json_encode($subjectArray);
-  }
-
-
-  // 5
-  function load_Modal_Teachers()
-  {
-    include 'b_ConnectionString.php';
-
-    $teacherArray = array();
-
-    $query = 'SELECT * FROM employees ORDER BY employeeID ASC';
-    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
-      or die ("cannot load tables");  
-
-    while($getRow = mysqli_fetch_assoc($tableQuery))
-    {
-      $teacherArray[] = $getRow;
-    }
-
-    echo json_encode($teacherArray);
-  }
 
 
 
@@ -348,17 +129,15 @@ include 'b_ConnectionString.php';
 		$capturedSYTermID  = $_POST['sendSYTermID'];
     $capturedGradeLevelID = $_POST['sendGradeLevelID'];
 		$capturedSectionID = $_POST['sendSectionID'];
-    $capturedSubjectID = $_POST['sendSubjectID'];
-    $capturedTeacherID = $_POST['sendTeacherID'];
+
 
 		$query = 
       "
       INSERT INTO classes 
-      (syTermID_Classes, gradeLevelID_Classes, sectionID_Classes, subjectID_Classes, adviserID_Classes) 
+      (syTermID_Start_Classes, gradeLevelID_Classes, sectionID_Classes) 
 		  VALUES (
 		  '".$capturedSYTermID."','".$capturedGradeLevelID."',
-      '".$capturedSectionID."','".$capturedSubjectID."',
-      '".$capturedTeacherID."'
+      '".$capturedSectionID."'
 		)";
 		mysqli_query($mySQL_ConStr, $query);
 	}
@@ -385,16 +164,14 @@ include 'b_ConnectionString.php';
     include 'b_ConnectionString.php';
 
     $capturedClassID   = $_POST['sendClassID'];
-    
 		$capturedSYTermID  = $_POST['sendSYTermID'];
 		$capturedSectionID = $_POST['sendSectionID'];
-    $capturedSubjectID = $_POST['sendSubjectID'];
-    $capturedTeacherID = $_POST['sendTeacherID'];
+
 
       $query = 
       "
-      SELECT gradeLevelID_Sections FROM sections 
-      WHERE sectionID = $capturedSectionID;  
+        SELECT gradeLevelID_Sections FROM sections 
+        WHERE sectionID = $capturedSectionID;  
       ";
 
       $tableQuery = mysqli_query($mySQL_ConStr, $query);
@@ -402,15 +179,13 @@ include 'b_ConnectionString.php';
 
 		$query = "UPDATE classes 
 		SET 
-		syTermID_Classes  = '"     .$capturedSYTermID."',
+		syTermID_Start_Classes  = '".$capturedSYTermID."',
     gradeLevelID_Classes = '".$getRow['gradeLevelID_Sections']."',
-		sectionID_Classes = '"     .$capturedSectionID."',
-    subjectID_Classes = '"     .$capturedSubjectID."',
-    adviserID_Classes = '"     .$capturedTeacherID."'  
+		sectionID_Classes = '"     .$capturedSectionID."'  
 		WHERE
-		classID = '$capturedClassID';";
+		classID = $capturedClassID;";
 
-		mysql_query($query);
+		mysqli_query($mySQL_ConStr, $query);
 	}
 
 
@@ -420,10 +195,243 @@ include 'b_ConnectionString.php';
     include 'b_ConnectionString.php';
 
 		$capturedClassID   = $_POST['sendClassID'];
-
 		$query = "delete from classes where classID = $capturedClassID";
 		mysqli_query($mySQL_ConStr, $query);
 	}
+
+
+
+   //---------------------------------------------------------------------------
+   // _ M A I N _   A J A X E S
+   //---------------------------------------------------------------------------
+
+   // 21 
+  function load_Main_SYTerms()
+  {
+    include 'b_ConnectionString.php';
+
+
+    $syTermArray = [];
+
+    $query = 
+         "SELECT 
+        sy1.syTermID,
+        sy1.schoolYear,
+        IFNULL(COUNT(c.schoolYear), 0) AS 'children' 
+        FROM syterms as sy1 
+        LEFT JOIN 
+        (
+            SELECT * from classes 
+            INNER JOIN (select * from syterms) as syterms 
+            ON classes.syTermID_Start_Classes = syterms.sytermID
+        ) as c
+        ON c.schoolYear = sy1.schoolYear
+        WHERE sy1.termNumber = 1
+        GROUP BY sy1.schoolYear ASC
+
+         ";
+
+
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
+      or die ("cannot load tables");  
+
+
+    while($getRow = mysqli_fetch_assoc($tableQuery))
+    {
+         $syTermArray[] = $getRow;
+    }
+
+    echo json_encode($syTermArray);
+
+  }
+
+
+ // 22
+  function load_Main_GradeLevels()
+  {
+    include 'b_ConnectionString.php';
+
+    $captured_SYTermIDStart = $_POST['sent_SYTermIDStart'];
+
+    $GradeLevelArray = [];
+    
+    $query = 
+       "SELECT 
+          gl.gradeLevelID,
+          gl.gradeLevelName,
+          IFNULL(COUNT(c.gradeLevelID_Classes), 0) AS 'children'
+        FROM 
+          gradelevels as gl  
+
+        LEFT JOIN 
+        (
+          SELECT * from classes 
+          INNER JOIN (SELECT schoolyear, syTermID FROM syterms) AS syterms 
+          ON classes.syTermID_Start_Classes = syterms.sytermID
+          WHERE syterms.schoolYear = (SELECT schoolYear FROM syterms WHERE syTermID = '".$captured_SYTermIDStart."')
+        ) as c 
+        ON c.gradeLevelID_Classes = gl.gradeLevelID
+        GROUP by gl.gradeLevelID;
+       ";
+
+
+
+      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
+          or die ("cannot load tables");  
+
+
+      while($getRow = mysqli_fetch_assoc($tableQuery))
+      {
+          $gradeLevelArray[] = $getRow;
+      }
+
+      echo json_encode($gradeLevelArray); 
+
+  }
+
+   // 23
+  function load_Main_ClassTableEntries()
+  {
+    include 'b_ConnectionString.php';
+
+    $captured_GradeLevelID = $_POST['sent_GradeLevel']; 
+    $captured_SYTermID = $_POST['sent_SYTermID'];
+
+    $sectionArray = array();
+
+      $query = 
+          "SELECT 
+          c.classID,
+          sectionID, 
+          sectionName,
+          c.studentCount as studentCount
+          FROM sections AS s
+
+          INNER JOIN 
+          (
+      
+            SELECT
+              classID,
+              sectionID_Classes, 
+              sytermID_Start_Classes,
+              syterms.syTermID, 
+              IFNULL(COUNT(cs.classStudentID), 0) AS studentCount  
+            FROM classes 
+            
+            LEFT JOIN
+            classStudents as cs
+            on cs.classID_ClassStudents = classes.classID
+         
+            LEFT JOIN
+            (
+              SELECT syTermID, schoolYear
+              FROM syterms 
+            ) AS syterms            
+            ON syterms.syTermID = classes.sytermID_Start_Classes          
+            
+            WHERE syterms.schoolYear = 
+            (
+              SELECT schoolYear FROM syterms WHERE syTermID = ".$captured_SYTermID."
+            )
+
+            GROUP by classes.classID
+                  
+          ) as c
+          ON s.sectionID = c.sectionID_Classes
+          
+          WHERE s.gradeLevelID_Sections = ".$captured_GradeLevelID."
+
+          ";                
+
+      $tableQuery = mysqli_query($mySQL_ConStr, $query) 
+          or die ("cannot load tables");  
+
+      $counter = 0;
+      while($getRow = mysqli_fetch_assoc($tableQuery))
+      {
+          $sectionArray[$counter]['classID'] = $getRow['classID'];
+          $sectionArray[$counter]['sectionID'] = $getRow['sectionID'];
+          $sectionArray[$counter]['sectionName'] = $getRow['sectionName'];
+          $sectionArray[$counter]['studentCount'] = $getRow['studentCount'];
+          //$sectionArray[$counter]['classTable'] = load_Main_ClassTableEntries_Subtable
+          //($captured_SYTermID, $getRow['sectionID']);
+
+
+          $counter++;
+      }
+
+
+    echo json_encode($sectionArray);
+  }
+
+
+   //---------------------------------------------------------------------------
+   // E X I S T E N C E
+   //---------------------------------------------------------------------------
+
+
+
+  // 31
+
+  function checkNewEntryForExistence()
+  {
+    include 'b_ConnectionString.php';
+
+    $captured_SYTermID = $_POST['sent_SYTermID']; 
+    $captured_SectionID = $_POST['sent_SectionID'];
+
+
+    $query = 
+    "SELECT 1 as 'exists' FROM
+    (
+        SELECT * from classes
+        INNER JOIN
+        (SELECT syTermID from syterms where schoolYear = 
+            (SELECT schoolYear from syterms where syTermID = '$captured_SYTermID')
+        ) AS sy
+        ON classes.syTermID_Start_Classes = sy.syTermID
+    ) 
+    AS merged
+    WHERE merged.sectionID_Classes = '$captured_SectionID'";
+
+      $result = mysqli_query($mySQL_ConStr, $query);
+      $returnValue = mysqli_fetch_array($result);
+
+      echo json_encode($returnValue['exists']);  
+  }
+
+
+  // 32
+
+  function checkExistingEntry()
+  {
+    
+      require 'b_ConnectionString.php';
+
+      $captured_ClassID = $_POST['sent_ClassID'];
+     $captured_SYTermID = $_POST['sent_SYTermID']; 
+    $captured_SectionID = $_POST['sent_SectionID'];     
+
+      $query = 
+      "SELECT 1 as 'exists' FROM
+      (
+          SELECT * from classes
+          INNER JOIN
+          (SELECT syTermID from syterms where schoolYear = 
+              (SELECT schoolYear from syterms where syTermID = '$captured_SYTermID')
+          ) AS sy
+          ON classes.syTermID_Start_Classes = sy.syTermID
+      ) 
+      AS merged
+      WHERE 
+      (merged.sectionID_Classes = '$captured_SectionID') AND 
+      (merged.classID != 'captured_ClassID')";
+
+      $result = mysqli_query($mySQL_ConStr, $query);
+      $returnValue = mysqli_fetch_array($result);
+
+      echo json_encode($returnValue['exists']);  
+  }
 
 
    //---------------------------------------------------------------------------
@@ -460,6 +468,8 @@ include 'b_ConnectionString.php';
         $otherTableCount = mysqli_fetch_row($result);
         return $otherTableCount;
     }
+
+
 
 
 

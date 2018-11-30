@@ -196,6 +196,8 @@ function clickAddButton()
     }
 }
 
+
+
 async function addNewEntry()
 {
   var invalidCounter = 0;
@@ -210,7 +212,7 @@ async function addNewEntry()
     errorMessage += '</br>The School Year' + required;       
   }
 
-  await ajax_CheckSYTermEntryForExistence(schoolYear)
+  await ajax_CheckEntryForExistence(schoolYear)
   .then(function(result)
   {
     if (result == 1)
@@ -243,7 +245,6 @@ async function clickEditButton(obj_SYTermObject, syTermID)
   var col_num = parseInt( $(this).parent().parent().index() )+1;  
 
  
-  alert('this is syterm ID => ' + syTermID);
 
   await ajax_RetrieveSYTermEntry(syTermID)
   .then(function(data)
@@ -379,6 +380,7 @@ function ajax_UpdateSYTermEntry(isActiveData, syTermIDData)
       textStatus, errorThrown) 
   	{
   		alert('Error in Updating Grading Period Info!'); 		
+  		
       reject(errorThrown);
   	});
 
@@ -390,7 +392,6 @@ function ajax_UpdateSYTermEntry(isActiveData, syTermIDData)
 function ajax_RemoveSYTermEntry(schoolYear)
 {
 
-  alert(schoolYear);
 	return promise = new Promise((resolve, reject) =>
   {  
 
@@ -424,7 +425,7 @@ function ajax_RemoveSYTermEntry(schoolYear)
 
 
 
-function ajax_CheckSYTermEntryForExistence(schoolYear)
+function ajax_CheckEntryForExistence(schoolYear)
 {
   return promise = new Promise((resolve, reject) =>
   {   
@@ -447,12 +448,15 @@ function ajax_CheckSYTermEntryForExistence(schoolYear)
 
     request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
     {
-      alert('Error in Checking for Existence!');  
+      alert('Error in Checking for Existence!'.errorThrown);  
       reject(errorThrown);    
     });
 
   });
 };
+
+
+
 
 
 

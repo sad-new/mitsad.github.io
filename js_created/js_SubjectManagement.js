@@ -1,38 +1,51 @@
-
-//SEND ANY BUTTON HERE TO TEST IF THEY WORK.
-function testClicker()
-{ 
-}
-
 function object_Subject()
 {
 	var subjectID = "";
 	var subjectName = "";
-	var subjectGradeLevel = "";
+	var subjectGradeLevelID = "";
 
-    this.setVariables = function(var_SubjectID, var_SubjectName, var_SubjectGradeLevel)
+
+    this.setSubjectID = function(var_SubjectID)
     {
 		subjectID = var_SubjectID;
-		subjectName = var_SubjectName;
-		subjectGradeLevel = var_SubjectGradeLevel;
     };
 
-    this.getVariables = function()
+    this.setSubjectName = function(var_SubjectName)
     {
-        var subjectDetails = new Object();
-
-        subjectDetails["subjectID"] = subjectID;
-        subjectDetails["subjectName"] = subjectName;
-        subjectDetails["subjectGradeLevel"] = subjectGradeLevel;  
-
-        return subjectDetails;
+		subjectName = var_SubjectName;
     };
+
+    this.setSubjectGradeLevelID = function(var_SubjectGradeLevelID)
+    {
+		subjectGradeLevelID = var_SubjectGradeLevelID;
+    };
+
+
+
+
+    this.getSubjectID = function()
+    {
+		return subjectID;
+    };
+
+    this.getSubjectName = function()
+    {
+		return subjectName;
+    };
+
+    this.getSubjectGradeLevelID = function()
+    {
+		return subjectGradeLevelID;
+    };
+
+
+
 
     this.purgeVariables = function()
     {
 		subjectID = "";
 		subjectName = "";
-		subjectGradeLevel = "";     
+		subjectGradeLevelID = "";     
     };	
 }
 
@@ -40,7 +53,7 @@ function object_Subject()
 $(document).ready(function() 
 {
 
-	var obj_SubjectObject = new object_Subject();
+	var object_SubjectObject = new object_Subject();
 
 	if(document.getElementById('dropDown_Main_GradeLevel'))
 	{
@@ -59,8 +72,8 @@ $(document).ready(function()
 
 	$('#button_Main_AddSubject').click(function(e) 
 	{	
-		obj_SubjectObject.purgeVariables();
-    	$('#response').empty(); 
+		$('#response').empty(); 
+		object_SubjectObject.purgeVariables();
     	document.getElementById('textBox_AddModal_SubjectName').value = "";
 
     	loadModalDropDowns('add'); 
@@ -69,31 +82,8 @@ $(document).ready(function()
 
 	$('#button_AddModal_AddSubject').click(function(e) 
 	{
-		e.preventDefault();
-
-		var valid = '';
-		var required = ' is required.';
-		var SubjectName = document.getElementById('textBox_AddModal_SubjectName').value;
-
-
-		if (SubjectName == '' || SubjectName <= 1) 
-		{
-			valid += '</br>The Subject Name' + required;				
-		}
-
-		if (valid != '') 
-		{
-		 	$('form #response').removeClass().addClass('error')
-		 		.html('<strong>Please correct the errors below.</strong>' +valid).fadeIn('fast');	
-		}
-
-
-		else
-	 	{
-	 		var nameData = $('#textBox_AddModal_SubjectName').val();
-	 		var gradeLevelData = $('#dropDown_AddModal_GradeLevel').val();
-	 		ajax_AddSubject(nameData, gradeLevelData);			
-	 	}
+		$('#response').empty(); 
+	 	addSubject();
 	});
 
 
@@ -107,20 +97,17 @@ $(document).ready(function()
     {
     	$('#response').empty();
         var subjectID = this.value; 
-        obj_SubjectObject.setVariables(subjectID,"","");
 
-        fillEditModal(subjectID);    
+        object_SubjectObject.purgeVariables();
+        object_SubjectObject.setSubjectID(subjectID);
+        
+        retrieveSubject(object_SubjectObject);    
     });
 
 	$('#button_EditModal_UpdateSubject').click(function(e) 
 	{
-
-		var subjectIDData  = obj_SubjectObject.getVariables()["subjectID"];
-		var nameData       = $('#textBox_EditModal_SubjectName').val();
-		var gradeLevelData = $('#dropDown_EditModal_GradeLevel').val();
-
-
-		ajax_UpdateSubject(subjectIDData, nameData, gradeLevelData);
+		$('#response').empty();
+		updateSubject(object_SubjectObject);
 	});
 
 
@@ -133,13 +120,14 @@ $(document).ready(function()
   	$(document).on( "click", ".button_Main_DeleteSubject", function() 
  	{
 	 	var subjectID = this.value; 
-	 	obj_SubjectObject.setVariables(subjectID,"","");
+	 	object_SubjectObject.purgeVariables();
+	 	object_SubjectObject.setSubjectID(subjectID);
 	});
 
 
 	$('#button_DeleteModal_DeleteSubject').click(function(e) 
 	{
-		var subjectID = obj_SubjectObject.getVariables()["subjectID"];
+		var subjectID = object_SubjectObject.getSubjectID();
 		ajax_RemoveSubject(subjectID);
 	});
 
@@ -326,12 +314,56 @@ async function loadModalDropDowns(action)
 
 
 
-async function fillEditModal(subjectID)
+async function addSubject()
 {
+
+	var invalidCounter = 0;
+	var errorMsg = "";
+	var required = ' is required.';
+ 	
+ 	var subjectName = $('#textBox_AddModal_SubjectName').val();
+ 	var gradeLevelID = $('#dropDown_AddModal_GradeLevel').val();
+
+
+	if (subjectName == '' || subjectName <= 1) 
+	{
+		invalidCounter++;
+		errorMsg += '</br>The Subject Name' + required;				
+	}
+
+	await ajax_CheckNewEntryForExistence(gradeLevelID, subjectName)
+	.then(function(result)
+	{
+	    if (result == 1)
+	    {
+	      invalidCounter++;
+	      errorMsg += '</br>Subject already exists.';
+	    }
+	});
+
+
+	if (invalidCounter > 0) 
+	{
+	 	$('form #response').removeClass().addClass('error')
+	 		.html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');	
+	}
+	else
+ 	{
+ 		ajax_AddSubject(subjectName, gradeLevelID);			
+ 	}
+}
+
+
+async function retrieveSubject(object_SubjectObject)
+{
+
    await loadModalDropDowns('edit');
-   await ajax_RetrieveSubject(subjectID)
+   await ajax_RetrieveSubject(object_SubjectObject.getSubjectID()) 
    .then(function(result)
    {
+		object_SubjectObject.setSubjectName(result['subjectName']);
+		object_SubjectObject.setSubjectGradeLevelID(result['gradeLevelID_Subjects']);
+
 
       $(".form-group #textBox_EditModal_SubjectName").val(result['subjectName']);
       
@@ -348,8 +380,45 @@ async function fillEditModal(subjectID)
    });
 }
 
+async function updateSubject(object_SubjectObject)
+{
+
+	var invalidCounter = 0;
+	var errorMsg = "";
+	var required = ' is required.';
+ 	
+ 	var subjectID = object_SubjectObject.getSubjectID();
+ 	var subjectName = $('#textBox_EditModal_SubjectName').val();
+ 	var gradeLevelID = $('#dropDown_EditModal_GradeLevel').val();
 
 
+	if (subjectName == '' || subjectName <= 1) 
+	{
+		invalidCounter++;
+		errorMsg += '</br>The Subject Name' + required;				
+	}
+
+	await ajax_checkExistingEntry(subjectID, gradeLevelID, subjectName)
+	.then(function(result)
+	{
+	    if (result == 1)
+	    {
+	      invalidCounter++;
+	      errorMsg += '</br>Subject already exists.';
+	    }
+	});
+
+
+	if (invalidCounter > 0) 
+	{
+	 	$('form #response').removeClass().addClass('error')
+	 		.html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');	
+	}
+	else
+ 	{
+ 		ajax_UpdateSubject(subjectID, subjectName, gradeLevelID);			
+ 	}
+}
 
 //---------------------------------------------------------------------------
 // A J A X   C A L L S
@@ -380,8 +449,8 @@ function ajax_GetGradeLevels(action)
 
         .fail(function(XMLHttpRequest, textStatus, errorThrown) 
         {
-            alert('Error in School Year retrieval!');
-            reject('Error in School Year retrieval!');        
+            alert('Error in Grade Level retrieval!');
+            reject('Error in Grade Level retrieval! '+ errorThrown);        
         });
 
     });
@@ -412,7 +481,7 @@ function ajax_GetSubjectTableEntries(gradeLevel)
 	    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
 	    {
 	       alert('Error in Subject List retrieval!');
-	       reject('Error in Subject List retrieval!');        
+	       reject('Error in Subject List retrieval!' + errorThrown);        
 		});
 	});
 
@@ -443,7 +512,8 @@ function ajax_AddSubject(subjectNameData, subjectGradeLevelData)
 
 	.fail(function(XMLHttpRequest, textStatus, errorThrown) 
 	{
-		alert('Error in Subject Creation!'); 			
+		alert('Error in Subject Creation!'); 
+					
 	})
 
 	.always(function(XMLHttpRequest, status) 
@@ -555,3 +625,71 @@ function ajax_RemoveSubject(subjectID)
 
 };
 
+
+
+function ajax_CheckNewEntryForExistence(gradeLevelID, subjectName)
+{
+
+	return promise = new Promise((resolve, reject) =>
+	{   
+		var request = $.ajax({		
+	   		type: 'POST',
+	   		url: 'Backend/a_SubjectManagement.php',
+	   		data: 
+			{
+				action: "7",
+				sendGradeLevelID: gradeLevelID,
+				sendSubjectName: subjectName
+			},
+
+			dataType: 'json',
+			cache: false
+		});
+
+		request.done(function(data) 
+		{ 
+			resolve(data);
+		});
+
+		request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+		{
+			console.log('Error in Checking for Existence! ' + errorThrown);  
+	      	reject(errorThrown);  
+		});
+	});
+};
+
+
+
+function ajax_checkExistingEntry(subjectID, gradeLevelID, subjectName)
+{
+
+	return promise = new Promise((resolve, reject) =>
+	{   
+		var request = $.ajax({		
+	   		type: 'POST',
+	   		url: 'Backend/a_SubjectManagement.php',
+	   		data: 
+			{
+				action: "8",
+				sendSubjectID: subjectID,
+				sendGradeLevelID: gradeLevelID,
+				sendSubjectName: subjectName
+			},
+
+			dataType: 'json',
+			cache: false
+		});
+
+		request.done(function(data) 
+		{ 
+			resolve(data);
+		});
+
+		request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+		{
+			console.log('Error in Checking for Existence! ' + errorThrown);  
+	      	reject(errorThrown);  
+		});
+	});
+};

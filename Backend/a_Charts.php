@@ -33,6 +33,8 @@ include 'b_ConnectionString.php';
 	// 1
 	function loadSYTerms()
 	{
+    include "b_ConnectionString.php";
+
 		$syTermArray = [];
 
 
@@ -44,17 +46,17 @@ include 'b_ConnectionString.php';
 				(select * from classes) as classes 
 				ON classes.classID = classID_Grades 
 				INNER JOIN 
-				(select * from syTerms) as syTerms 
-				ON classes.syTermID_Classes = syTerms.syTermID 
+				(select * from syterms) as syterms 
+				ON classes.syTermID_Classes = syterms.syTermID 
 			) 
 			as merged';
 
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 
 
@@ -73,6 +75,10 @@ include 'b_ConnectionString.php';
 	// 2
 	function loadGradeLevels()
 	{
+
+    include "b_ConnectionString.php";
+
+
 		$captured_SchoolYear = $_POST['sent_SchoolYear'];
 
 		$gradeLevelArray = [];
@@ -88,17 +94,17 @@ include 'b_ConnectionString.php';
 						(select * from sections) as sections 
 						ON classes.sectionID_Classes = sections.sectionID 
 						INNER JOIN 
-						(select * from syTerms) as syTerms 
-						ON classes.syTermID_Classes = syTerms.syTermID 
+						(select * from syterms) as syterms 
+						ON classes.syTermID_Classes = syterms.syTermID 
 					) 
 					as merged
 					WHERE merged.syTermID = '.$captured_SchoolYear.'';
 
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$gradeLevelArrayEntry = [];
 			$gradeLevelArrayEntry['gradeLevelID'] = $getRow['gradeLevelID_Sections'];
@@ -113,6 +119,10 @@ include 'b_ConnectionString.php';
 	// 3
 	function loadSections()
 	{
+    
+    include "b_ConnectionString.php";
+
+
 		$captured_SchoolYear = $_POST['sent_SchoolYear'];
 		$captured_GradeLevel = $_POST['sent_GradeLevel'];
 		
@@ -129,17 +139,17 @@ include 'b_ConnectionString.php';
 						(select * from sections) as sections 
 						ON classes.sectionID_Classes = sections.sectionID 
 						INNER JOIN 
-						(select * from syTerms) as syTerms 
-						ON classes.syTermID_Classes = syTerms.syTermID 
+						(select * from syterms) as syterms 
+						ON classes.syTermID_Classes = syterms.syTermID 
 					) 
 					as merged
 					WHERE merged.syTermID = '. $captured_SchoolYear .' AND merged.gradeLevelID_Sections ='. $captured_GradeLevel .'';
 
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$sectionArrayEntry = [];
 			$sectionArrayEntry['sectionID'] = $getRow['sectionID'];
@@ -155,6 +165,8 @@ include 'b_ConnectionString.php';
 	// 4
 	function loadSubjects()
 	{
+
+    include "b_ConnectionString.php";
 
 		$captured_SectionID = $_POST['sent_SectionID'];
 		$captured_SchoolYear = $_POST['sent_SchoolYear'];
@@ -179,10 +191,10 @@ include 'b_ConnectionString.php';
 					WHERE merged.sectionID = '.$captured_SectionID. ' AND merged.syTermID_Classes = '.$captured_SchoolYear.'';  
 
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$subjectArrayEntry = [];
 			$subjectArrayEntry['subjectID'] = $getRow['subjectID'];
@@ -203,6 +215,10 @@ include 'b_ConnectionString.php';
 	// 5
 	function getClass()
 	{
+
+    include "b_ConnectionString.php";
+
+
 		$captured_Selections = $_POST['sent_SchoolYear'];
 		$captured_Section = $_POST['sent_Section'];
 		$captured_Subject = $_POST['sent_Subject'];
@@ -219,10 +235,10 @@ include 'b_ConnectionString.php';
 			' and subjectID_Classes = ' . $captured_Subject .
 			'';
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			//$gradeArrayEntry = [];
 			$selectedClass = $getRow['classID'];
@@ -241,8 +257,10 @@ include 'b_ConnectionString.php';
 	// 11
 	function getWWAverageGradeData()
 	{
+
+    include "b_ConnectionString.php";
+
 		$captured_ClassID = $_POST['sent_ClassID'];
-		//$captured_Class = 1;
 
 		$gradeArray = [];
 
@@ -255,12 +273,12 @@ include 'b_ConnectionString.php';
 			from grades 
 			WHERE classID_Grades = '.$captured_ClassID.'';		
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 		//iterate each and every one of the elements inside fetch assoc.
 	
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			//$gradeArrayEntry = [];
 			$gradeArray[] = $getRow;
@@ -274,6 +292,9 @@ include 'b_ConnectionString.php';
 	// 12
 	function getPTAverageGradeData()
 	{
+    
+    include "b_ConnectionString.php";
+
 		$captured_ClassID = $_POST['sent_ClassID'];
 
 		$gradeArray = [];
@@ -288,12 +309,12 @@ include 'b_ConnectionString.php';
 			from grades 
 			WHERE classID_Grades = '.$captured_ClassID.'';		
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 		//iterate each and every one of the elements inside fetch assoc.
 	
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			//$gradeArrayEntry = [];
 			$gradeArray[] = $getRow;
@@ -307,6 +328,10 @@ include 'b_ConnectionString.php';
 	// 13
 	function getPassFailGradeData()
 	{
+
+    include "b_ConnectionString.php";
+
+
 		$captured_ClassID = $_POST['sent_ClassID'];
 
 		$gradeArray = [];
@@ -321,12 +346,12 @@ include 'b_ConnectionString.php';
 			from grades where classID_Grades = '.$captured_ClassID.'
 		';
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 		//iterate each and every one of the elements inside fetch assoc.
 	
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			$gradeArray[] = $getRow;
 		}
@@ -338,6 +363,10 @@ include 'b_ConnectionString.php';
 	// 14
 	function getFinalGradeData()
 	{
+
+    include "b_ConnectionString.php";
+
+
 		$captured_ClassID = $_POST['sent_ClassID'];
 
 		$gradeArray = [];
@@ -350,11 +379,11 @@ include 'b_ConnectionString.php';
 			from grades 
 			WHERE classID_Grades = '.$captured_ClassID.'';		
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
 		//iterate each and every one of the elements inside fetch assoc.	
-		while($getRow = mysql_fetch_assoc($tableQuery))
+		while($getRow = mysqli_fetch_assoc($tableQuery))
 		{
 			//$gradeArrayEntry = [];
 			$gradeArray[] = $getRow;

@@ -26,11 +26,14 @@ include 'b_ConnectionString.php';
   // 1
   function getActiveTerm()
   {
+      include "b_ConnectionString.php";
+
+
       $activeTermArray = array();
       $query = "SELECT * from syterms WHERE isActive = 1;";
-      $tableQuery = mysql_query($query); 
+      $tableQuery = mysqli_query($mySQL_ConStr, $query); 
 
-      $activeTermArray = mysql_fetch_assoc($tableQuery);
+      $activeTermArray = mysqli_fetch_assoc($tableQuery);
       echo json_encode($activeTermArray);
   }
 
@@ -38,6 +41,8 @@ include 'b_ConnectionString.php';
   // 2
   function loadDropDown()
   {
+
+    include "b_ConnectionString.php";
 
     $capturedSYTerm        = $_POST['sendSYTerm'];
     $capturedUserType      = $_POST['sendUserType'];
@@ -47,7 +52,7 @@ include 'b_ConnectionString.php';
     $classArray = array();
 
     $query = 
-      'SELECT * FROM classes INNER JOIN sections 
+      "SELECT * FROM classes INNER JOIN sections 
       ON classes.sectionID_Classes = sections.sectionID
       INNER JOIN
         (SELECT  subjectID, subjectName FROM subjects) AS J1 
@@ -56,26 +61,26 @@ include 'b_ConnectionString.php';
         (SELECT employeeID, employeeName FROM employees) AS J2
         ON classes.adviserID_Classes = J2.employeeID
       INNER JOIN
-        (SELECT syTermID, schoolYear, termNumber FROM syTerms) AS J3
+        (SELECT syTermID, schoolYear, termNumber FROM syterms) AS J3
         ON classes.syTermID_Classes = J3.syTermID
       INNER JOIN
         (SELECT employeeID, accountID_Employees from employees) as J4
         ON classes.adviserID_Classes = J4.employeeID
       INNER JOIN
-        (SELECT gradeLevelID, gradeLevelName from gradeLevels) as J5
+        (SELECT gradeLevelID, gradeLevelName from gradelevels) as J5
         ON sections.gradeLevelID_Sections = J5.gradeLevelID
-      ';
+      ";
 
       if ($capturedUserType != 'schoolAdministrator')
       {
-        $query .= ' AND J4.accountID_Employees = '.$capturedAccountNumber;
+        $query .= " AND J4.accountID_Employees = ".$capturedAccountNumber;
       }
 
 
-    $tableQuery = mysql_query($query) 
+    $tableQuery = mysqli_query($mySQL_ConStr, $query) 
       or die ("cannot load tables");  
 
-    while($getRow = mysql_fetch_assoc($tableQuery))
+    while($getRow = mysqli_fetch_assoc($tableQuery))
     {
       
       $classEntry = array();
@@ -108,6 +113,7 @@ include 'b_ConnectionString.php';
 	function uploadCSVTable()
 	{
 
+    include "b_ConnectionString.php";
 
     $property = "max_input_vars";
     $propertyValue = 20000;
@@ -122,7 +128,7 @@ include 'b_ConnectionString.php';
 
     $query = 'DELETE FROM grades 
     WHERE classID_Grades = '.$capturedClass;
-    mysql_query($query);
+    mysqli_query($mySQL_ConStr, $query);
 
 
 
@@ -153,7 +159,7 @@ include 'b_ConnectionString.php';
       }
 
       $query = 'INSERT INTO grades'.$columnNames. ' VALUES '. $rowEntries.';';
-      mysql_query($query);
+      mysqli_query($mySQL_ConStr, $query);
       
     }
 

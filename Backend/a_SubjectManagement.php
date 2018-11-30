@@ -19,10 +19,12 @@ include 'b_ConnectionString.php';
 	        case '3' : retrieveSubject();break;
 	        case '4' : updateSubject();break;
 	        case '5' : removeSubject();break;
-	        //default : echo 'NOTHING';break;
+	        
+	        case '7' : checkNewEntryForExistence();break;
+	        case '8' : checkExistingEntry();break;
 
-          case '11' : loadGradeLevelsAndSubjectCount();break;
-          case '12' : loadSubjects();break;
+	        case '11' : loadGradeLevelsAndSubjectCount();break;
+	        case '12' : loadSubjects();break;
 	    }
 	}
 
@@ -32,7 +34,7 @@ include 'b_ConnectionString.php';
     {
       require 'b_ConnectionString.php';
 
-      $query = 'SELECT COUNT(*) FROM subjects';
+      $query = "SELECT COUNT(*) FROM subjects";
       $result = mysqli_query($mySQL_ConStr, $query); 
       $tableCount = mysqli_fetch_row($result);
       return $tableCount[0];
@@ -64,7 +66,7 @@ include 'b_ConnectionString.php';
 	{
     require 'b_ConnectionString.php';
 
-			$query = 'select sectionID from sections order by sectionID DESC';
+			$query = "select sectionID from sections order by sectionID DESC";
 			$result = mysqli_query($mySQL_ConStr, $query); 
 			$accountID = mysqli_fetch_row($result);
 			return $sectionID[0];
@@ -99,17 +101,18 @@ include 'b_ConnectionString.php';
 	{  
     require 'b_ConnectionString.php';
 		
-    $capturedSubjectID = $_POST['sendSubjectID'];
+   	 $capturedSubjectID = $_POST['sendSubjectID'];
 		$capturedSubjectNameData = $_POST['sendSubjectNameData'];
 		$capturedSubjectGradeLevelData = $_POST['sendSubjectGradeLevelData'];
 		
 
-		$query = "UPDATE subjects 
+		$query = 
+		"UPDATE subjects 
 		SET 
 		gradeLevelID_Subjects = '$capturedSubjectGradeLevelData',
 		subjectName = '$capturedSubjectNameData'
 		WHERE
-		subjectID = '$capturedSubjectID';";
+		subjectID = '$capturedSubjectID'";
 
 
 		mysqli_query($mySQL_ConStr, $query);
@@ -124,7 +127,7 @@ include 'b_ConnectionString.php';
 	function removeSubject()
 	{
 
-    require 'b_ConnectionString.php';
+    	require 'b_ConnectionString.php';
 
 		$capturedSubjectID = $_POST['sendSubjectID'];
 
@@ -137,6 +140,58 @@ include 'b_ConnectionString.php';
 
 
 
+	// 7
+
+	function checkNewEntryForExistence()
+	{
+		
+	    require 'b_ConnectionString.php';
+
+		$capturedGradeLevelID = $_POST['sendGradeLevelID'];
+		$capturedSubjectName = $_POST['sendSubjectName'];
+
+
+	    $query =
+	    	"SELECT 1 as 'exists' FROM subjects 
+		    WHERE 
+		    (gradeLevelID_Subjects = '$capturedGradeLevelID') AND 
+			(subjectName = '$capturedSubjectName') LIMIT 1";
+
+
+	    $result = mysqli_query($mySQL_ConStr, $query);
+	    $returnValue = mysqli_fetch_array($result);
+
+    	echo json_encode($returnValue['exists']);   
+	}
+
+
+	// 8
+
+	function checkExistingEntry()
+	{
+		
+	    require 'b_ConnectionString.php';
+
+	    $capturedSubjectID = $_POST['sendSubjectID'];
+		$capturedGradeLevelID = $_POST['sendGradeLevelID'];
+		$capturedSubjectName = $_POST['sendSubjectName'];
+
+
+	    $query =
+	    	"SELECT 1 as 'exists' FROM subjects 
+		    WHERE 
+		    (subjectID != '$capturedSubjectID') AND
+		    (gradeLevelID_Subjects = '$capturedGradeLevelID') AND 
+			(subjectName = '$capturedSubjectName')
+			LIMIT 1";
+
+
+	    $result = mysqli_query($mySQL_ConStr, $query);
+	    $returnValue = mysqli_fetch_array($result);
+
+    	echo json_encode($returnValue['exists']);   
+	}
+
     //---------------------------------------------------------------------------
     // 1 1   L O A D   G R A D E   L E V E L S
     //---------------------------------------------------------------------------
@@ -147,13 +202,13 @@ include 'b_ConnectionString.php';
 
   		$syTermCountArray = array();
 
-  		$query = "
-        SELECT 
-				gl.gradeLevelID,
-	      gl.gradeLevelName,
-	      IFNULL(COUNT(s.subjectName), 0) AS 'children'
+  		$query = 
+  		"SELECT 
+			gl.gradeLevelID,
+	      	gl.gradeLevelName,
+	      	IFNULL(COUNT(s.subjectName), 0) AS 'children'
     		FROM 
-    			gradeLevels as gl  
+    			gradelevels as gl  
   
 		    LEFT JOIN 
 		    	subjects as s  
@@ -164,7 +219,7 @@ include 'b_ConnectionString.php';
   			or die ("cannot load tables");  
 
 
-  		while($getRow = mysqli_fetch_assoc($tableQuery))
+  		while($getRow = mysqli_fetch_array($tableQuery))
   		{
   			$syTermCountArray[] = $getRow;
   		}
@@ -212,7 +267,10 @@ include 'b_ConnectionString.php';
     require 'b_ConnectionString.php';
 
 
- 		$query = "SELECT EXISTS (SELECT * from accounts where username = '$capturedUserNameData' and password = '$capturedPassData')";
+ 		$query = 
+ 		"SELECT EXISTS (SELECT * from accounts 
+ 		where username = '$capturedUserNameData' 
+ 		and password = '$capturedPassData')";
  		$result = mysqli_query($query);
 
  		//account exists.

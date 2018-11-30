@@ -16,5 +16,15 @@
 				<li <?php if ($activeHeader == 4) {echo ('class = "active"');} ?> >
                     <a href="SectionManagement.php">Section Management</a></li>
 
+                <li role="presentation" class="divider"></li>
+
+
 				<li <?php if ($activeHeader == 6) {echo ('class = "active"');} ?> >
                     <a href="ClassManagement.php">Class Management</a></li>
+
+
+                <li role="presentation" class="divider"></li>
+
+
+                <li <?php if ($activeHeader == 7) {echo ('class = "active"');} ?> >
+                    <a href="ClassRecordsManagement.php">Class Records Management</a></li>

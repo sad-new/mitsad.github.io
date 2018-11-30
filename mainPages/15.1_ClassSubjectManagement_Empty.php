@@ -18,7 +18,6 @@
 
 
              <div id="classComponentResponse">
-            component
             </div>
 
 				<div class="row"  align = "center">											

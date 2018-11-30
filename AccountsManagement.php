@@ -1,4 +1,3 @@
-
 <?php
 
 	include "Backend/b_ConnectionString.php";

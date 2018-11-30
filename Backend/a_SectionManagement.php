@@ -21,6 +21,9 @@ include 'b_ConnectionString.php';
 	        case '5' : removeSection();break;
 	        //default : echo 'NOTHING';break;
 
+	       	case '7' : checkNewEntryForExistence();break;
+	        case '8' : checkExistingEntry();break;
+
             case '11' : loadGradeLevelsAndSectionCount();break;
             case '12' : loadSections();break;
 	    }
@@ -134,6 +137,60 @@ include 'b_ConnectionString.php';
 
 
 
+
+	// 7
+
+	function checkNewEntryForExistence()
+	{
+		
+	    require 'b_ConnectionString.php';
+
+		$capturedGradeLevelID = $_POST['sendGradeLevelID'];
+		$capturedSectionName = $_POST['sendSectionName'];
+
+
+	    $query =
+	    	"SELECT 1 as 'exists' FROM sections 
+		    WHERE 
+		    (gradeLevelID_Sections = '$capturedGradeLevelID') AND 
+			(SectionName = '$capturedSectionName') LIMIT 1";
+
+
+	    $result = mysqli_query($mySQL_ConStr, $query);
+	    $returnValue = mysqli_fetch_array($result);
+
+    	echo json_encode($returnValue['exists']);   
+	}
+
+
+	// 8
+
+	function checkExistingEntry()
+	{
+		
+	    require 'b_ConnectionString.php';
+
+	    $capturedSectionID = $_POST['sendSectionID'];
+		$capturedGradeLevelID = $_POST['sendGradeLevelID'];
+		$capturedSectionName = $_POST['sendSectionName'];
+
+
+	    $query =
+	    	"SELECT 1 as 'exists' FROM Sections 
+		    WHERE 
+		    (sectionID != '$capturedSectionID') AND
+		    (gradeLevelID_Sections = '$capturedGradeLevelID') AND 
+			(sectionName = '$capturedSectionName')
+			LIMIT 1";
+
+
+	    $result = mysqli_query($mySQL_ConStr, $query);
+	    $returnValue = mysqli_fetch_array($result);
+
+    	echo json_encode($returnValue['exists']);   
+	}
+
+
     //---------------------------------------------------------------------------
     // 1 1   L O A D   G R A D E   L E V E L S
     //---------------------------------------------------------------------------
@@ -150,7 +207,7 @@ include 'b_ConnectionString.php';
   		        	gl.gradeLevelName,
   		        	IFNULL(COUNT(s.sectionName), 0) AS 'children'
   	    		FROM 
-  	    			gradeLevels as gl  
+  	    			gradelevels as gl  
       
   			    LEFT JOIN 
   			    	sections as s  

@@ -1,4 +1,3 @@
-
 <?php
 
 	include "Backend/b_ConnectionString.php";
@@ -65,19 +64,11 @@
 			</div>
 			<!--/.row-->
 
-            <?php
-                $tableCount = checkTableSize();
-
-                if ($tableCount > 0)
-                {
-                    include_once('mainPages/15.1_ClassSubjectManagement_Filled.php');
-                }
-                else
-                {
-                    include_once('mainPages/15.1_ClassSubjectManagement_Empty.php'); 
-                };
-            ?>
 			
+            <?php
+            	include_once('mainPages/15.1_ClassSubjectManagement_Filled.php');
+            ?>
+
 		</div>	
 
 	
@@ -99,7 +90,7 @@
 					    <div class="modal-header">
 					        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
 					        <span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
-					        <h4 class="modal-title custom_align" id="Heading">Add a new Class</h4>
+					        <h4 class="modal-title custom_align" id="addModal_Heading">Add a new Class</h4>
 					    </div>
 
 				    	<div class="modal-body">

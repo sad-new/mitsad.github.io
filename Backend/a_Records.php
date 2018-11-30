@@ -24,6 +24,8 @@
 
 	function loadDropDownSYTerm($userType, $accountNumber)
 	{
+		include "b_ConnectionString.php";
+
 		$classArray = array();
 
 		$query = 
@@ -66,10 +68,10 @@
 			}
 
 
-		$tableQuery = mysql_query($query) 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query) 
 			or die ("cannot load tables");  
 
-		while($getRow = mysql_fetch_array($tableQuery))
+		while($getRow = mysqli_fetch_array($tableQuery))
 		{
 			//fill one row of the array
 			$classEntry = array();
@@ -104,7 +106,8 @@
 	//1
 	function getGradesTable()
 	{
-
+		include "b_ConnectionString.php";
+		
 		$capturedSelectedClass  = $_POST['selectedClass'];
 
 		$gradeArray = [];
@@ -142,14 +145,16 @@
 	//TABLE: COLUMN NAMES
 	function getColumnNames()
 	{
+		include "b_ConnectionString.php";
+
 		$query = 'show columns from grades;';
-		$tableQuery = mysql_query($query); 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query); 
 
 		//array of column Names
 		$colNames = [];
 
 		//place extracted field to the array
-		while ($getRow = mysql_fetch_array($tableQuery))
+		while ($getRow = mysqli_fetch_array($tableQuery))
 		{
 			$colNames[] = $getRow['Field'];
 		}
@@ -161,12 +166,15 @@
 	//TABLE: TABLE ENTRIES
 	function getGradeEntries($colNames, $capturedSelectedClass)
 	{
+		include "b_ConnectionString.php";
+
+
 		$gradeArray = array();
 
 		$query = 'select * from grades where classID_Grades = ' .$capturedSelectedClass;
-		$tableQuery = mysql_query($query); 
+		$tableQuery = mysqli_query($mySQL_ConStr, $query); 
 
-		while ($row = mysql_fetch_array($tableQuery))
+		while ($row = mysqli_fetch_array($tableQuery))
 		{
 			$rowEntry = array();
 			for ($i = 0; $i < count($colNames) ; $i++)

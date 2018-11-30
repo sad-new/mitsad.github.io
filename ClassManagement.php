@@ -1,4 +1,3 @@
-
 <?php
 
 	include "Backend/b_ConnectionString.php";
@@ -103,7 +102,7 @@
 				    	<div class="modal-body">
 
 							<div class="form-group">
-								<label>School Year / Term</label>
+								<label>School Year</label>
 								<select class="form-control" 
 									id = "dropDown_AddModal_SchoolYear">
 
@@ -125,24 +124,6 @@
 									
 								</select>
 							</div>
-
-
-              <div class="form-group">
-                <label>Subject</label>
-                <select class="form-control" 
-                  id = "dropDown_AddModal_Subject"> 
-                  
-                </select>
-              </div>
-
-
-              <div class="form-group">
-                <label>Teacher</label>
-                <select class="form-control" 
-                  id = "dropDown_AddModal_Teacher"> 
-                  
-                </select>
-              </div>
 
 						</div>
 
@@ -196,20 +177,20 @@
 			        	<div class="modal-body">
 
 							<div class="form-group">
-								<label>School Year / Term</label>
+								<label>School Year</label>
 								<select class="form-control" 
 									id = "dropDown_EditModal_SchoolYear">
 									
 								</select>
 							</div>
 
-              <div class="form-group">
-                <label>Grade Level</label>
-                <select class="form-control" 
-                   id = "dropDown_EditModal_GradeLevel">
+				              <div class="form-group">
+				                <label>Grade Level</label>
+				                <select class="form-control" 
+				                   id = "dropDown_EditModal_GradeLevel">
 
-                </select>
-              </div>
+				                </select>
+				              </div>
 
 							<div class="form-group">
 								<label>Section</label>
@@ -218,22 +199,6 @@
 									
 								</select>
 							</div>
-
-              <div class="form-group">
-                <label>Subject</label>
-                <select class="form-control" 
-                  id = "dropDown_EditModal_Subject"> 
-                  
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label>Teacher</label>
-                <select class="form-control" 
-                  id = "dropDown_EditModal_Teacher"> 
-                  
-                </select>
-              </div>
 
 
 

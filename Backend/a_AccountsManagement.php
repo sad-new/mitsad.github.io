@@ -38,6 +38,18 @@
     // 0 )   N O N   A J A X   S T U F F
     //---------------------------------------------------------------------------
 
+    function checkTableSize()
+    {
+      require 'b_ConnectionString.php';
+
+      $query = 'SELECT COUNT(*) FROM accounts';
+      $result = mysqli_query($mySQL_ConStr, $query); 
+      $tableCount = mysqli_fetch_row($result);
+      return $tableCount[0];
+    }
+
+
+
     //RETRIEVE ACCOUNTID OF THE LATEST CREATED ACCOUNT
     function getAccountID()
     {
@@ -47,16 +59,6 @@
       $result = mysqli_query($mySQL_ConStr, $query); 
       $accountID = mysqli_fetch_row($result);
       return $accountID[0];
-    }
-
-    function checkTableSize()
-    {
-      require 'b_ConnectionString.php';
-
-      $query = 'SELECT COUNT(*) FROM accounts';
-      $result = mysqli_query($mySQL_ConStr, $query); 
-      $tableCount = mysqli_fetch_row($result);
-      return $tableCount[0];
     }
 
 
@@ -193,16 +195,17 @@
 	//---------------------------------------------------------------------------	
 	function ajax_RemoveTeacher()
 	{
-    require 'b_ConnectionString.php';
+   		require 'b_ConnectionString.php';
 
 		$captured_AccountID = $_POST['sent_AccountID'];
 
 		//remove user from employees and accounts table
 		$query = 
                 "delete from employees 
-                where accountID_Employees = $captured_AccountID";
+                where accountID_Employees = '$captured_AccountID'";
 		mysqli_query($mySQL_ConStr, $query);
-		$query = "delete from accounts where accountID = $captured_AccountID";
+
+		$query = "delete from accounts where accountID = '$captured_AccountID'";
 		mysqli_query($mySQL_ConStr, $query);
 
 		//return 1;

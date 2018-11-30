@@ -1,370 +1,389 @@
 
-function object_Class()
+function object_ClassDetails()
 {
-  var classID = "";
+  var classID = ""; 
+  var GradeLevelName = "";
+  var sectionName = "";
+  var schoolYear = "";
+
+
+  this.getClassID = function()
+  {
+    return classID;
+  };
+
+  this.getGradeLevelName = function()
+  {
+    return gradeLevelName;
+  }
+
+  this.getSectionName = function()
+  {
+    return sectionName;
+  }
+
+  this.getschoolYear = function()
+  {
+    return schoolYear;
+  }
+
+
 
   this.setClassID = function(var_ClassID)
   {
     classID = var_ClassID;
   };
 
-  this.getClassID = function()
+  this.setGradeLevelName = function(var_GradeLevelName)
   {
-    return classID;
+    gradeLevelName = var_GradeLevelName;
+  };
+
+  this.setSectionName = function(var_SectionName)
+  {
+    sectionName = var_SectionName;
+  };
+
+  this.setSchoolYear = function(var_SchoolYear)
+  {
+    schoolYear = var_SchoolYear;
   }
 
+
 }
 
-function object_ClassStudentEntry()
-{
-  var studentLRN = ""; 
-  var studentName = ""; 
-  var studentGender = ""; 
-}
+
+
 
 $(document).ready(function() 
 {
-  
-  classStudentEntryArray = [];
+  var object_ClassDetailsObject = new object_ClassDetails();
 
-  object_Class = new object_Class();
-
-  let urlParams = new URLSearchParams(window.location.search);
-  object_Class.setClassID(urlParams.get('ID'));
-
-  var replacementEntries = [];
-
-  ajax_LoadClassDetails(object_Class.getClassID());
-  loadClassListTable(object_Class.getClassID());
-
-
-  //capture CSV
-  document.getElementById('fileCSV').onchange = function()
+  //classID from storage
+  var selected = localStorage.getItem('classID');
+  if (selected == null)
   {
-    var file = this.files[0];
-    loadCSVAndSecondaryTable(file)
-    .then(function(result)
-    {
-      classStudentEntryArray = result; 
-      alert(classStudentEntryArray + " here");
-    });
+    window.location = "ClassManagement.php";
+  }
+
+  else
+  {
+    object_ClassDetailsObject.setClassID(selected);
+    loadMainPageDetails(object_ClassDetailsObject);
   }
 
 
+  //you store classLists here.
+	var studentEntries = [];
 
-  $(document).on("click", "#button_Main_UploadList", function()
-  {
-    ajax_UploadClassListEntries(object_Class.getClassID(), classStudentEntryArray);
-  });
+	//capture CSV
+	document.getElementById('fileCSV').onchange = function()
+	{
+  		//get filetype
+  		var file = this.files[0];
+      uploadFile(file, studentEntries);
+	};
 
-  $(document).on("click", "#button_Main_Cancel", function()
-  {
-    document.getElementById("fileCSV").value = "";    
-    classStudentEntryArray = [];
-    document.getElementById("secondaryTableContainer").innerHTML = "";
-
-  });
+	//Place CSV to DB
+	$(document).on("click", '#submitCSV', function()
+	{
+		var dropDown = document.getElementById("classDropDown");
+    ajax_UploadCSVTable(studentEntries, object_ClassDetailsObject.getClassID());
+	});
 
 });
 
 
 
-async function loadCSVAndSecondaryTable(file)
+//---------------------------------------------------------------------------
+// A J A X
+//--------------------------------------------------------------------------- 
+
+
+
+
+async function loadMainPageDetails(details)
 {
-
-  var reader = new FileReader();
-  var studentEntries = [];
-
-  return promise = new Promise((resolve, reject) =>
-  {
-
-    reader.onerror = function(e) 
-    {
-      reader.abort();
-      reject(new DOMException("Problem parsing input file."));
-    };
-
-    reader.onload = function(e)
-    {
-
-      var workBook = XLSX.read(this.result, {type: 'binary'});
-
-      //READ AND PARSE THE FIRST SHEET
-      var sheet1 = workBook.Sheets[workBook.SheetNames[0]];
-      var XL_Worksheet = XLSX.utils.sheet_to_row_object_array(sheet1);
-
-
-      //GET ALL THE STUDENT NAMES
-      workBook.Sheets[workBook.SheetNames[0]]['!ref'] =  "B10:B58";
-      var excelEntries = (XLSX.utils.sheet_to_row_object_array(sheet1, {header:1}));
-
-      for (var i = 0 ; i < excelEntries.length ; i++)
-      {
-        if (excelEntries[i] != "")
-        {
-          var studentEntriesRow = []; 
-
-          //STUDENT LRN
-          studentEntriesRow.push(excelEntries[i][0]);  
-
-
-          //GENDER
-          workBook.Sheets[workBook.SheetNames[0]]['!ref'] =  "G"+ (10+i);
-          var gradeEntries = (XLSX.utils.sheet_to_row_object_array(sheet1, {header:1}));
-          studentEntriesRow.push(gradeEntries[0][0]); 
-
-
-          //STUDENT NAME
-          workBook.Sheets[workBook.SheetNames[0]]['!ref'] =  "C"+ (10+i);
-          var gradeEntries = (XLSX.utils.sheet_to_row_object_array(sheet1, {header:1}));
-          studentEntriesRow.push(gradeEntries[0][0]); 
-
-
-          studentEntries.push(studentEntriesRow);
-        }
-      }
-
-
-      // CREATE TABLE
-      var studentEntryColumns = ["Student LRN", "Gender", "Student Name"];
-      var tableContainer = document.getElementById("secondaryTableContainer");
-      tableContainer.innerHTML = "";
-
-      var table = document.createElement('table');
-      table.id = "secondTable";
-      table.className = "table"; 
-      table.className += " table-bordred";
-      table.className += " table-striped";
-
-      var tableHead = document.createElement('thead');
-      var tableHeader = document.createElement('tr');
-
-      var tableBody = document.createElement('tbody');
-
-      tableContainer.appendChild(table);
-      
-      table.appendChild(tableHead).appendChild(tableHeader);
-      for (var i = 0; i <  studentEntryColumns.length; i++)
-      {
-          tableHeader.appendChild(document.createElement('th')).appendChild
-          (document.createTextNode(studentEntryColumns[i]));
-      }
-
-
-      table.appendChild(tableBody);
-      for (var i = 0; i < studentEntries.length; i++)
-      {
-        var tableRow = document.createElement('tr');
-        tableBody.appendChild(tableRow);
-
-        for (var j = 0; j < studentEntries[i].length ; j++)
-        {
-            var tableCell = document.createElement('td');
-            tableRow.appendChild(tableCell);
-            tableCell.appendChild(document.createTextNode(studentEntries[i][j]));
-        }
-      }
-
-
-      var paragraph1 = document.createElement('p');
-      paragraph1.setAttribute("data-placement","top");
-      paragraph1.setAttribute("data-toggle","tooltip"); 
-      paragraph1.setAttribute("title","clearFileUpload");
-
-      var button_Main_UploadList = document.createElement('button');
-      button_Main_UploadList.setAttribute("class","btn btn-primary");
-      button_Main_UploadList.setAttribute("id","button_Main_UploadList"); 
-      button_Main_UploadList.setAttribute("data-title","Edit"); 
-      var button_Main_UploadList_Text = document.createTextNode("Upload List");
-
-      var paragraph2 = document.createElement('p');
-      paragraph2.setAttribute("data-placement","top");
-      paragraph2.setAttribute("data-toggle","tooltip"); 
-      paragraph2.setAttribute("title","clearFileUpload");
-
-      var button_Main_Cancel = document.createElement('button');
-      button_Main_Cancel.setAttribute("class","btn btn-primary");
-      button_Main_Cancel.setAttribute("id","button_Main_Cancel"); 
-      button_Main_Cancel.setAttribute("data-title","Edit"); 
-      var button_Main_Cancel_Text = document.createTextNode("Cancel");
-
-      tableContainer.appendChild(document.createElement('br')); 
-      tableContainer.appendChild(document.createElement('br')); 
-
-      tableContainer.appendChild(paragraph1)
-      .appendChild(button_Main_UploadList)
-      .appendChild(button_Main_UploadList_Text);
-
-      tableContainer.appendChild(paragraph2)
-      .appendChild(button_Main_Cancel)
-      .appendChild(button_Main_Cancel_Text);
-
-      tableContainer.appendChild(document.createElement('br')); 
-      tableContainer.appendChild(document.createElement('br')); 
-
-      resolve(studentEntries);
-    };
-    
-  //DISPLAY ALL
-
-    reader.readAsBinaryString(file);
-  });
-
-}
-
-function loadClassListTable(var_ClassID)
-{
-  var tableContainer = document.getElementById("mainTableContainer");
-
-  ajax_LoadClassListEntries(var_ClassID) 
+  await ajax_LoadClassDetails(details)
   .then(function(result)
   {
-    tableContainer.innerHTML = "";
 
-    if (result != false)
+    details.setSectionName(result['sectionName']);
+    details.setGradeLevelName(result['gradeLevelName']);
+    details.setSchoolYear(result['schoolYear']);
+
+
+    currentClass = document.getElementById('currentClassLabel');
+    currentClass.innerHTML = 
+    "Current Class List for <b>" + details.getGradeLevelName() + 
+    "</b> - <b>" + details.getSectionName() + 
+    "</b> in <b>SY " + details.getschoolYear() + "</b> (" + result['studentCount'] + " children)";
+  })
+
+
+  await ajax_LoadCurrentClassList(details)
+  .then(function(result)
+  {
+    if (result.length > 0)
     {
-
-      var tableHeaderColumns = ['ID', 'Student LRN', 'Gender', 'Student Name']; 
-      var arrayColumnNames = ['classStudentID', 'studentLRN', 'studentGender', 'studentName'];
-
-
-      var table = document.createElement('table');
-      table.id = "table";
-      table.className = "table"; 
-      table.className += " table-bordred";
-      table.className += " table-striped";
-      tableContainer.appendChild(table);
+      buildTable(result, '1');
+    }
+    else
+    {
+    }
+  })
+}
 
 
-      var tableHead = document.createElement('thead');
-      var tableHeader = document.createElement('tr');        
-      table.appendChild(tableHead).appendChild(tableHeader);
-      for (var i = 0; i <  tableHeaderColumns.length; i++)
+//lazy class. bad practice, but it works.
+async function uploadFile(file, studentEntries)
+{
+  await extractExcelEntries(file, studentEntries);
+  if (studentEntries.length > 0)
+  {
+    await buildTable(studentEntries, '2');
+    document.getElementById('submitCSV').style.visibility = "visible";
+    document.getElementById('submitCSV').disabled = false;
+
+    document.getElementById('classToBeUploadedLabel').innerHTML = "Entries to be Uploaded (" + studentEntries.length + " children)";
+  }
+  else
+  {
+    document.getElementById("classFromExcelContainer").innerHTML = "";
+    document.getElementById('submitCSV').disabled = true;
+    document.getElementById('submitCSV').style.visibility = "hidden";
+    
+    document.getElementById('classToBeUploadedLabel').innerHTML = "";
+  }
+}
+
+
+
+
+async function extractExcelEntries(file, studentEntries)
+{
+    return readerPromise = new Promise((resolve, reject) =>
+    {
+      var reader = new FileReader();
+      reader.onload = function(e)
       {
-          tableHeader.appendChild(document.createElement('th')).appendChild
-          (document.createTextNode(tableHeaderColumns[i]));
-      }
-
-
-      var tableBody = document.createElement('tbody');
-      table.appendChild(tableBody);
-      for (var i = 0; i < result.length; i++)
-      {
-        var tableRow = document.createElement('tr');
-        
-        tableBody.appendChild(tableRow);
-        for (var j = 0; j < arrayColumnNames.length; j++)
+        //erase array entries
+        while(studentEntries.length > 0) 
         {
-          var tableCell = document.createElement('td');
-          tableRow.appendChild(tableCell);
-          tableCell.appendChild(document.createTextNode(result[i][arrayColumnNames[j]]));
+          studentEntries.pop();
         }
+
+        var workbook = XLSX.read(this.result, 
+        {
+          type: 'binary'
+        });
+
+        //READ AND PARSE THE FIRST SHEET
+        var sheet1 = workbook.Sheets[workbook.SheetNames[0]];
+        var XL_Worksheet = XLSX.utils.sheet_to_row_object_array(sheet1);
+
+
+        //GET KEY NAMES, PLACE ON FIRST ROW
+        keyNames = [];
+        rowNames = [];
+        for (var key in (XL_Worksheet[0]))
+        {
+            rowNames.push(key);
+        }
+
+
+        //CHECK ROW B FOR EXISTENCE OF ENTRY (B10-B58)
+        workbook.Sheets[workbook.SheetNames[0]]['!ref'] =  "B10:B58";
+        var excelEntries = (XLSX.utils.sheet_to_row_object_array(sheet1, {header:1}));
+        for (var i = 0 ; i < excelEntries.length ; i++)
+        {
+            //iterate through all name entries, ignore all NULL COL B Entries
+            if (excelEntries[i] != "")
+            {
+              var studentEntriesRow = []; 
+
+              studentEntriesRow.push(excelEntries[i][0]);  // COL B
+
+              workbook.Sheets[workbook.SheetNames[0]]['!ref'] =  "C"+ (10+i) + ":G" +  (10+i);
+              var gradeEntries = (XLSX.utils.sheet_to_row_object_array(sheet1, {header:1}));
+
+              studentEntriesRow.push(gradeEntries[0][0]); // COL C
+              studentEntriesRow.push(gradeEntries[0][4]); // COL G
+
+              studentEntries.push(studentEntriesRow);
+            }
+        }
+
+        resolve(studentEntries);
+      };
+      reader.readAsBinaryString(file);
+    });
+}
+
+
+
+async function buildTable(studentEntries, tableChoice)
+{
+    // programmatically create table. this is some terrible code.
+
+
+    var table  = document.createElement('table');
+    table.id = "table";
+    table.className = "table"; 
+    table.className += " table-bordred";
+    table.className += " table-striped";
+
+
+    // HEAD
+    var tableHead = document.createElement('thead');
+    var tableHeadRow = document.createElement('tr');
+    table.appendChild(tableHead);
+    tableHead.appendChild(tableHeadRow);
+
+    var tableHeaders = ["Student Number", "Student Name", "Gender"];
+    tableHeaders.forEach(function(entry)
+    {
+        tableHeadRow.appendChild(document.createElement('th'))
+        .appendChild(document.createTextNode(entry));
+    });
+
+    // BODY
+    var tableBody = document.createElement('tbody');
+    table.appendChild(tableBody);
+
+    for (var i = 0 ; i < studentEntries.length ; i++)
+    {
+      var tableBodyRow = document.createElement('tr');
+      for  (var j = 0 ; j < studentEntries[i].length ; j++)
+      {
+        tableBodyRow.appendChild(document.createElement('td')).appendChild
+        (document.createTextNode(studentEntries[i][j]));
       }
-
-
+      tableBody.appendChild(tableBodyRow);
     }
 
-    else 
+    tableContainer = "";  
+
+    switch(tableChoice)
     {
-        alert('error here');
+      case '1' : tableContainer = 'currentClassContainer'; break;  
+      case '2' : tableContainer = "classFromExcelContainer"; break;
     }
 
-  });
-
-} 
-
-
-function ajax_LoadClassDetails(var_ClassID)
-{
-  var header = document.getElementById("classListChartName");
-  return promise = new Promise((resolve, reject) =>
-  {
-    $.ajax({    
-        type: 'POST',
-        url: 'Backend/a_ClassListManagement.php',   
-        data: 
-        {
-            action: "1",
-            sent_ClassID : var_ClassID
-        },
-        dataType: 'json',
-        cache: false
-    })
-    .done(function(result)
-    {
-      header.innerHTML = "List of Registered Students for Section <b>" + result["sectionName"] + "</b> in SY <b>" + result["schoolYear"] + "</b>";
-      resolve();
-    })
-    .fail(function(XMLHttpRequest, textStatus, errorThrown) 
-    {
-      console.log("ERROR in loading Class List Details\n" + errorThrown);
-      reject();
-    });
-
-  });
-
+    document.getElementById(tableContainer).innerHTML = "";
+    document.getElementById(tableContainer).appendChild(table);
 }
 
 
-function ajax_LoadClassListEntries(var_ClassID)
+
+
+
+
+
+
+
+function ajax_LoadClassDetails(classDetails)
 {
+
   return promise = new Promise((resolve, reject) =>
   {
-    $.ajax({    
-        type: 'POST',
-        url: 'Backend/a_ClassListManagement.php',   
-        data: 
-        {
-            action: "2",
-            sent_ClassID : var_ClassID
-        },
-        dataType: 'json',
-        cache: false
-    })
-    .done(function(result)
-    {
-      resolve(result);
-    })
-    .fail(function(XMLHttpRequest, textStatus, errorThrown) 
-    {
-      console.log("ERROR in loading Class List Entries\n" + errorThrown);
-      reject();
+    var request =$.ajax({
+      type: 'POST',
+      url: 'Backend/a_ClassListManagement.php',
+      data: 
+      {
+        action: "1",  
+        sent_ClassID : classDetails.getClassID()
+
+      },
+
+      dataType: 'json',
+      cache: false
     });
 
+    request.done(function(result) 
+    { 
+      resolve(result); 
+    });
+    
+    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+    {   
+      console.log("Error in Retrieving Class Details. " + errorThrown);    
+      reject();
+    });
   });
-
 }
 
-function ajax_UploadClassListEntries(var_ClassID, var_ClasslistArray)
+
+function ajax_LoadCurrentClassList(classDetails)
 {
 
-  alert(var_ClasslistArray + " text");
 
   return promise = new Promise((resolve, reject) =>
   {
-    $.ajax({    
-        type: 'POST',
-        url: 'Backend/a_ClassListManagement.php',   
-        data: 
-        {
-            action: "3",
-            sent_ClassID : var_ClassID,
-            sent_ClassListArray : var_ClasslistArray
-        },
-        dataType: 'json',
-        cache: false
-    })
-    .done(function(result)
+    var request =$.ajax({
+      type: 'POST',
+      url: 'Backend/a_ClassListManagement.php',
+      data: 
+      {
+        action: "3",  
+         sent_ClassID : classDetails.getClassID()
+
+      },
+
+      dataType: 'json',
+      cache: false
+    });
+
+    request.done(function(result) 
     {
-      alert('Upload Success!');
+      resolve(result); 
+    });
+    
+    request.fail(function(XMLHttpRequest, textStatus, errorThrown) 
+    {   
+      console.log("Error in Retrieving Current Class list. " + errorThrown);    
+      reject();
+    });
+  });
+}
+
+
+
+async function ajax_UploadCSVTable(var_StudentEntries, var_ClassID)
+{
+
+  return promise = new Promise((resolve, reject) =>
+  {
+    var request = $.ajax({
+			type: 'POST',
+			url: 'Backend/a_ClassListManagement.php',
+			data: 
+			{
+				action: "4",
+        send_CSVArray    : var_StudentEntries,  
+        send_ClassID     : var_ClassID
+			},
+
+			dataType: 'text',
+			cache: false
+    });
+
+		request.done(function(result)
+		{
+      alert("Successfully Uploaded!");
       location.reload();
       resolve();
-    })
-    .fail(function(XMLHttpRequest, textStatus, errorThrown) 
-    {
-      console.log("ERROR in uploading Class List Entries\n" + errorThrown);
-      reject();
-    });
+		});
 
-  });  
+		request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+		{
+			console.log('Error in uploading Class List. ' + errorThrown); 		
+      reject();
+		});
+  });
+
 }
+
+
+

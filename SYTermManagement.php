@@ -1,4 +1,3 @@
-
 <?php
 
 	include "Backend/b_ConnectionString.php";
@@ -63,8 +62,8 @@
 
             <?php
                 $tableCount = checkTableSize();
-                
-                $activeTerm = getActiveTerm();
+               
+                //$activeTerm = getActiveTerm();
 
                 if ($tableCount > 0)
                 {

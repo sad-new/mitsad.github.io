@@ -1,45 +1,58 @@
-
-function testClicker()
-{
-}
-
-
 function object_Section()
 {
 	var sectionID = "";
 	var sectionName = "";
-	var sectionGradeLevel = "";
+	var sectionGradeLevelID = "";
 
-    this.setVariables = function(var_SectionID, var_SectionName, var_SectionGradeLevel)
+
+    this.setSectionID = function(var_SectionID)
     {
 		sectionID = var_SectionID;
-		sectionName = var_SectionName;
-		sectionGradeLevel = var_SectionGradeLevel;
     };
 
-    this.getVariables = function()
+    this.setSectionName = function(var_SectionName)
     {
-        var sectionDetails = new Object();
-
-        sectionDetails["sectionID"] = sectionID;
-        sectionDetails["sectionName"] = sectionName;
-        sectionDetails["sectionGradeLevel"] = sectionGradeLevel;  
-
-        return sectionDetails;
+		sectionName = var_SectionName;
     };
+
+    this.setSectionGradeLevelID = function(var_SectionGradeLevelID)
+    {
+		sectionGradeLevelID = var_SectionGradeLevelID;
+    };
+
+
+
+
+    this.getSectionID = function()
+    {
+		return sectionID;
+    };
+
+    this.getSectionName = function()
+    {
+		return sectionName;
+    };
+
+    this.getSectionGradeLevelID = function()
+    {
+		return sectionGradeLevelID;
+    };
+
+
+
 
     this.purgeVariables = function()
     {
 		sectionID = "";
 		sectionName = "";
-		sectionGradeLevel = "";     
+		sectionGradeLevelID = "";     
     };	
 }
 
 $(document).ready(function() 
 {
 
-    var obj_SectionObject = new object_Section();
+    var object_SectionObject = new object_Section();
 
 
 	if(document.getElementById('dropDown_Main_GradeLevel'))
@@ -59,7 +72,7 @@ $(document).ready(function()
 	$('#button_Main_AddSection').click(function(e) 
 	{	
 
-		obj_SectionObject.purgeVariables();
+		object_SectionObject.purgeVariables();
 		$('#response').empty(); 
     	document.getElementById('textBox_AddModal_SectionName').value = "";
 
@@ -68,30 +81,8 @@ $(document).ready(function()
 
 	$('#button_AddModal_AddSection').click(function(e) 
 	{
-		e.preventDefault();
-
-		var valid = '';
-		var required = ' is required.';
-		var SectionName = document.getElementById('textBox_AddModal_SectionName').value;
-
-			//error check
-			if (SectionName == '' || SectionName <= 1) 
-			{
-				valid += '</br>The Section Name' + required;				
-			}
-
-			if (valid != '') 
-			{
-			 	$('form #response').removeClass().addClass('error')
-			 		.html('<strong>Please correct the errors below.</strong>' +valid).fadeIn('fast');	
-			}
-
-			else
-		 	{
-		 		var nameData = $('#textBox_AddModal_SectionName').val();
-		 		var gradeLevelData = $('#dropDown_AddModal_GradeLevel').val();
-		 		ajax_AddSection(nameData, gradeLevelData);				
-		 	}
+		$('#response').empty();
+		addSection();
 	});
 
 
@@ -104,24 +95,19 @@ $(document).ready(function()
     $(document).on( "click", ".button_Main_EditSection", function() 
     {
     	$('#response').empty();
-        var sectionID = this.value; 
-        obj_SectionObject.setVariables(sectionID,"","");
+	 	var sectionID = this.value; 
 
-        fillEditModal(sectionID);    
+	 	object_SectionObject.purgeVariables();
+	 	object_SectionObject.setSectionID(this.value);    
+
+	 	retrieveSection(object_SectionObject);   
     });
 
 
-	//clicking the (./) UPDATE will update the data.
 	$('#button_EditModal_UpdateSection').click(function(e) 
 	{
-
-		var sectionIDData  = obj_SectionObject.getVariables()["sectionID"];
-		var nameData       = $('#textBox_EditModal_SectionName').val();
-		var gradeLevelData = $('#dropDown_EditModal_GradeLevel').val();
-
-		//alert(sectionIDData + "   " + nameData); 
-
-		ajax_UpdateSection(sectionIDData, nameData, gradeLevelData);
+		$('#response').empty();
+		updateSection(object_SectionObject);
 	});
 
 
@@ -134,13 +120,13 @@ $(document).ready(function()
   	$(document).on( "click", ".button_Main_DeleteSection", function() 
  	{
 	 	var sectionID = this.value; 
-	 	obj_SectionObject.setVariables(sectionID,"","");
+	 	object_SectionObject.setVariables(sectionID,"","");
 	});
 
 
 	$('#button_DeleteModal_DeleteSection').click(function(e) 
 	{
-		var sectionID = obj_SectionObject.getVariables()["sectionID"];
+		var sectionID = object_SectionObject.getVariables()["sectionID"];
 		ajax_RemoveSection(sectionID);
 	});
 
@@ -343,13 +329,60 @@ async function loadModalDropDowns(action)
 
 
 
-
-async function fillEditModal(sectionID)
+async function addSection()
 {
+
+	var invalidCounter = 0;
+	var errorMsg = "";
+	var required = ' is required.';
+ 	
+ 	var sectionName = $('#textBox_AddModal_SectionName').val();
+ 	var gradeLevelID = $('#dropDown_AddModal_GradeLevel').val();
+
+
+	if (sectionName == '' || sectionName <= 1) 
+	{
+		invalidCounter++;
+		errorMsg += '</br>The Section Name' + required;				
+	}
+
+	await ajax_CheckNewEntryForExistence(gradeLevelID, sectionName)
+	.then(function(result)
+	{
+	    if (result == 1)
+	    {
+	      invalidCounter++;
+	      errorMsg += '</br>Section already exists.';
+	    }
+	});
+
+
+	if (invalidCounter > 0) 
+	{
+	 	$('form #response').removeClass().addClass('error')
+	 		.html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');	
+	}
+	else
+ 	{
+ 		ajax_AddSection(sectionName, gradeLevelID);			
+ 	}
+}
+
+
+async function retrieveSection(object_SectionObject)
+{
+
+
+
    await loadModalDropDowns('edit');
-   await ajax_RetrieveSection(sectionID)
+   await ajax_RetrieveSection(object_SectionObject.getSectionID()) 
    .then(function(result)
    {
+
+   		alert(result);
+		object_SectionObject.setSectionName(result['sectionName']);
+		object_SectionObject.setSectionGradeLevelID(result['gradeLevelID_Sections']);
+
 
       $(".form-group #textBox_EditModal_SectionName").val(result['sectionName']);
       
@@ -366,8 +399,45 @@ async function fillEditModal(sectionID)
    });
 }
 
+async function updateSection(object_SectionObject)
+{
+
+	var invalidCounter = 0;
+	var errorMsg = "";
+	var required = ' is required.';
+ 	
+ 	var sectionID = object_SectionObject.getSectionID();
+ 	var sectionName = $('#textBox_EditModal_SectionName').val();
+ 	var gradeLevelID = $('#dropDown_EditModal_GradeLevel').val();
 
 
+	if (sectionName == '' || sectionName <= 1) 
+	{
+		invalidCounter++;
+		errorMsg += '</br>The Section Name' + required;				
+	}
+
+	await ajax_checkExistingEntry(sectionID, gradeLevelID, sectionName)
+	.then(function(result)
+	{
+	    if (result == 1)
+	    {
+	      invalidCounter++;
+	      errorMsg += '</br>Section already exists.';
+	    }
+	});
+
+
+	if (invalidCounter > 0) 
+	{
+	 	$('form #response').removeClass().addClass('error')
+	 		.html('<strong>Please correct the errors below.</strong>' +errorMsg).fadeIn('fast');	
+	}
+	else
+ 	{
+ 		ajax_UpdateSection(sectionID, sectionName, gradeLevelID);			
+ 	}
+}
 
 //---------------------------------------------------------------------------
 // A J A X   C A L L S
@@ -589,4 +659,71 @@ function ajax_RemoveSection(sectionID)
 
 
 
+
+function ajax_CheckNewEntryForExistence(gradeLevelID, sectionName)
+{
+
+	return promise = new Promise((resolve, reject) =>
+	{   
+		var request = $.ajax({		
+	   		type: 'POST',
+	   		url: 'Backend/a_SectionManagement.php',
+	   		data: 
+			{
+				action: "7",
+				sendGradeLevelID: gradeLevelID,
+				sendSectionName: sectionName
+			},
+
+			dataType: 'json',
+			cache: false
+		});
+
+		request.done(function(data) 
+		{ 
+			resolve(data);
+		});
+
+		request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+		{
+			console.log('Error in Checking for Existence! ' + errorThrown);  
+	      	reject(errorThrown);  
+		});
+	});
+};
+
+
+
+function ajax_checkExistingEntry(sectionID, gradeLevelID, sectionName)
+{
+
+	return promise = new Promise((resolve, reject) =>
+	{   
+		var request = $.ajax({		
+	   		type: 'POST',
+	   		url: 'Backend/a_SectionManagement.php',
+	   		data: 
+			{
+				action: "8",
+				sendSectionID: sectionID,
+				sendGradeLevelID: gradeLevelID,
+				sendSectionName: sectionName
+			},
+
+			dataType: 'json',
+			cache: false
+		});
+
+		request.done(function(data) 
+		{ 
+			resolve(data);
+		});
+
+		request.fail(function(data, XMLHttpRequest, textStatus, errorThrown) 
+		{
+			console.log('Error in Checking for Existence! ' + errorThrown);  
+	      	reject(errorThrown);  
+		});
+	});
+};
 

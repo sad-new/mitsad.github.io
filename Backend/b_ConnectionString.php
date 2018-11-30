@@ -5,7 +5,7 @@
 	$host = "localhost";
 	$dbUser = "root";
 	$dbPass = "";
-	$dbName = "sadnew_v10";
+	$dbName = "karlkrum_sadnew_v11";
 
 
 	// VARIABLES
@@ -18,15 +18,15 @@
 	$mySQL_ConStr = 
 	@mysqli_connect(
     $mySQL_HostName, $mySQL_User, 
-    $mySQL_Password, $mySQL_Database)
-	or die("error over here. (1001)\n" . mysqli_error());
+    $mySQL_Password, $mySQL_Database);
+    
+	if (mysqli_connect_errno())
+    {
+       echo "error over here. (1001)\n" . mysqli_connect_error();
+    }
 
-	@mysqli_select_db($mySQL_ConStr, $mySQL_Database) 
-	or die("error over here. (1002)\n" . mysqli_error($bd)); 
+// 	@mysqli_select_db($mySQL_ConStr, $mySQL_Database) 
+// 	or die("error over here. (1002)\n" . mysqli_connect_error() ); 
 
-	// function connectToDB()
-	// {
-	// 		mysql_connect($mySQL_HostName, $mySQL_User, $mySQL_Password, $mySQL_Database); 
-	// }
 
 ?>

@@ -2,18 +2,6 @@
     <div class="col-lg-12">
         <div class="panel panel-default">
 
-            <div class="row">                                                   
-                <div class="col-sm-4 col-md-7 col-lg-5 btnaddteacher">
-                    <button type="button" 
-                    class="btn btn-primary" 
-                    data-toggle="modal" 
-                    data-title="addclass" 
-                    data-target="#addClass" 
-                    id="button_Main_AddClass">
-                    Add Class
-                    </button>
-                </div>
-            </div>
             <!--row-->
 
 
@@ -40,6 +28,20 @@
                                     </select>
                                 </div>
                             </div>
+
+                            <div class="row">                                                   
+                                <div class="col-sm-4 col-md-7 col-lg-5 btnaddteacher">
+                                    <button type="button" 
+                                    class="btn btn-primary" 
+                                    data-toggle="modal" 
+                                    data-title="addclass" 
+                                    data-target="#addClass" 
+                                    id="button_Main_AddClass">
+                                    Add Class
+                                    </button>
+                                </div>
+                            </div>
+
 
                         </div>
 
